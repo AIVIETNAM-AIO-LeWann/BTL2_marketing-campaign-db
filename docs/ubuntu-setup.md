@@ -1,6 +1,8 @@
 # Tiếp tục dự án trên Ubuntu
 
-Đọc [HANDOFF.md](HANDOFF.md) trước để giữ ngữ cảnh nghiệp vụ và phạm vi đã chốt. Windows không cần cài MySQL để chuyển dự án: Git giữ mã SQL, dữ liệu mẫu, kiểm thử và tài liệu; Ubuntu dựng lại server từ các file đó.
+Hướng dẫn này phục vụ **máy Ubuntu của cá nhân người dùng chính**, không phải quy định môi trường chung cho nhóm. Nếu mục tiêu chỉ là để Codex đọc lại và hiểu dự án, mở repo rồi đọc [AGENTS.md](../AGENTS.md) và [HANDOFF.md](HANDOFF.md); chưa cần làm các bước cài đặt bên dưới.
+
+Chỉ dùng phần thiết lập khi cần chạy CSDL. Git giữ mã SQL, dữ liệu mẫu, kiểm thử và tài liệu; kiểm tra MySQL/database đã có trước khi dựng thêm môi trường. Các thành viên khác có thể dùng Windows hoặc môi trường phù hợp của họ.
 
 ## 1. Lấy đúng mã nguồn
 

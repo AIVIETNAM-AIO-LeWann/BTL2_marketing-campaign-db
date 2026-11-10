@@ -2,7 +2,7 @@
 
 Phần 1: hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu. Procedure CRUD `KhoanChi`, hai procedure truy vấn, hai function nghiệp vụ, trigger lưu tổng chi phí và ứng dụng web thuộc phần 2–3, chưa triển khai trong nhánh này.
 
-**Chuyển từ Windows sang Ubuntu:** bắt đầu bằng [bàn giao ngữ cảnh](docs/HANDOFF.md), sau đó làm theo [hướng dẫn Ubuntu](docs/ubuntu-setup.md). Tài liệu ghi rõ quyết định đã chốt, cách dựng MySQL native/Docker, chạy SQL và test, cùng việc còn lại. Không cần mang runtime MySQL tạm từ Windows sang.
+**Cho Codex tiếp tục ở phiên/máy khác:** [AGENTS.md](AGENTS.md) chỉ dẫn đọc [bản bàn giao ngữ cảnh](docs/HANDOFF.md), gồm mục tiêu, quyết định đã chốt, trạng thái và việc còn lại. [Hướng dẫn Ubuntu](docs/ubuntu-setup.md) phục vụ môi trường cá nhân của người dùng chính; cả nhóm không bắt buộc dùng Ubuntu hoặc Docker.
 
 ## Yêu cầu môi trường
 

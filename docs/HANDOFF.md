@@ -1,6 +1,12 @@
 # Bàn giao ngữ cảnh — đọc trước khi tiếp tục trên Ubuntu
 
-Cập nhật ngày 10/11/2026. File này giữ các quyết định đã thống nhất để thành viên hoặc phiên trợ lý mới tiếp tục mà không cần lịch sử chat. Hướng dẫn môi trường nằm ở [ubuntu-setup.md](ubuntu-setup.md).
+Cập nhật ngày 10/11/2026. File này bàn giao ngữ cảnh cho **Codex trong phiên mới trên máy Ubuntu của người dùng**, để tiếp tục công việc từ repo mà không phải kể lại lịch sử chat. `AGENTS.md` ở gốc repo chỉ dẫn đọc file này. Hướng dẫn môi trường cá nhân nằm ở [ubuntu-setup.md](ubuntu-setup.md).
+
+## 0. Hiểu đúng việc chuyển môi trường
+
+- Chỉ người dùng chính dự định chuyển từ Windows sang Ubuntu; chưa biết các thành viên khác dùng môi trường nào. **Nhóm chưa thống nhất dùng chung Ubuntu hoặc Docker.**
+- Mục tiêu của tài liệu là giữ ngữ cảnh cho Codex: đang làm gì, vì sao chọn thiết kế này, đã làm tới đâu và được làm tiếp phần nào. Không chỉ là hướng dẫn cài MySQL.
+- Đọc ngữ cảnh trước, kiểm tra Git/PR và môi trường đang có, rồi mới thực hiện yêu cầu hiện tại. Không cài lại MySQL, dựng lại database hoặc thay hệ điều hành nếu nhiệm vụ chỉ là đọc/trao đổi.
 
 ## 1. Mục tiêu và phạm vi đang làm
 
@@ -59,10 +65,10 @@ Root/DB owner là tài khoản tin cậy, dùng cài đặt và kiểm thử. Kh
 
 ## 5. Trạng thái và cách kiểm chứng
 
-- Nhánh triển khai: `feat/part1-database`; PR đích main. Xem trạng thái PR trên GitHub trước khi chọn nhánh làm tiếp; tài liệu này không mặc định PR đã merge.
+- Nhánh triển khai: `feat/part1-database`; [PR #1](https://github.com/AIVIETNAM-AIO-LeWann/BTL2_marketing-campaign-db/pull/1) đích main. Xem trạng thái PR trên GitHub trước khi chọn nhánh làm tiếp; tài liệu này không mặc định PR đã merge.
 - Đã dựng sạch và kiểm thử trực tiếp bằng MySQL 8.4.7 portable trên Windows; Windows của người dùng không cần cài MySQL.
 - Có 15 bảng và 118 dòng mẫu. DS06 và MXH06 là tài nguyên chưa dùng nhưng có thương hiệu. HD01/HD02 có thực chi vượt ngân sách. CD03 hoàn thành; CD05 hủy vẫn giữ lịch sử. NV08 bị khóa nhưng dữ liệu cũ còn.
-- Kết quả kiểm thử mới nhất và giới hạn ở [part1-test-results.md](part1-test-results.md). CI `Part 1 MySQL` dựng MySQL 8.4.7 và chạy test trên Ubuntu; kiểm tra trạng thái thực tế trong GitHub Actions, không suy đoán đã xanh từ tên workflow.
+- Kết quả kiểm thử và giới hạn ở [part1-test-results.md](part1-test-results.md). Code tại commit `6f3ea14` đã đạt 81 tests Windows, 81 tests CI Ubuntu qua TCP và 81 tests qua Unix socket; [lượt CI xác nhận](https://github.com/AIVIETNAM-AIO-LeWann/BTL2_marketing-campaign-db/actions/runs/42790701240). Khi làm tiếp, kiểm tra thêm trạng thái commit mới, không suy đoán từ kết quả lịch sử.
 - Dữ liệu server, runtime tạm và mật khẩu không được chuyển bằng Git. Sang Ubuntu dựng lại từ SQL, không chép thư mục data MySQL Windows sang Linux.
 
 ## 6. Hướng phần 2–3 đã đồng ý, chưa hiện thực
@@ -82,12 +88,12 @@ Root/DB owner là tài khoản tin cậy, dùng cài đặt và kiểm thử. Kh
 
 ## 7. Việc đầu tiên trong phiên Ubuntu
 
-1. Đọc file này, README, ubuntu-setup.md và constraints.md.
-2. Kiểm tra nhánh/PR, phiên bản MySQL server và cách xác thực trên Ubuntu.
-3. Dựng từ SQL trên database thử nghiệm trống; xác nhận 15 bảng/118 dòng.
-4. Chạy bộ kiểm thử và đọc kết quả thực tế trước khi sửa tiếp.
-5. Hoàn tất review/merge phần 1; sau đó bàn phân công phần 2. Không tự làm thêm web trong lúc này.
+1. Đọc AGENTS.md, file này và README; đọc constraints.md khi nhiệm vụ liên quan SQL và ubuntu-setup.md khi cần chạy môi trường Ubuntu.
+2. Kiểm tra nhánh/PR, tóm tắt ngắn phạm vi và trạng thái đã hiểu; đối chiếu với yêu cầu mới của người dùng.
+3. Nếu cần dựng/chạy CSDL, kiểm tra MySQL server, cách xác thực và database đã có trên Ubuntu trước. Chỉ bootstrap trên môi trường thử trống; xác nhận 15 bảng/118 dòng và chạy test.
+4. Nếu chỉ đọc ngữ cảnh hoặc bàn kế hoạch, không tự cài phần mềm/chạy lại bootstrap.
+5. Tiếp tục hoàn thiện phần 1 nếu còn yêu cầu; phần 2–3 sẽ được phân công sau. Cập nhật file này khi phạm vi hoặc quyết định thay đổi.
 
 Prompt để bắt đầu lại với trợ lý:
 
-> Tiếp tục BTL2 marketing trong repo này. Hãy đọc docs/HANDOFF.md, docs/ubuntu-setup.md, README.md và docs/constraints.md trước. Hiện chỉ hoàn thiện phần 1; MySQL đã chốt, thiết kế 15 bảng với chuyên biệt hóa toàn phần. Kiểm tra nhánh/PR và môi trường Ubuntu, dựng CSDL thử nghiệm và chạy test. Giữ các quyết định đã ghi; chưa triển khai phần 2–3 hoặc chọn công nghệ web.
+> Đây là repo BTL2 marketing tôi chuyển từ Windows sang Ubuntu để làm tiếp. Hãy đọc AGENTS.md và docs/HANDOFF.md, rồi các tài liệu được chỉ dẫn để khôi phục ngữ cảnh. Trước hết tóm tắt mục tiêu, quyết định đã chốt, trạng thái code/PR và việc còn lại. Chưa cài đặt hoặc sửa code; chờ yêu cầu tiếp theo của tôi. Chỉ cá nhân tôi chuyển sang Ubuntu, không phải yêu cầu môi trường chung của nhóm.
