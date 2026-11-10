@@ -2,8 +2,6 @@
 
 Phần 1: hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu. Procedure CRUD `KhoanChi`, hai procedure truy vấn, hai function nghiệp vụ, trigger lưu tổng chi phí và ứng dụng web thuộc phần 2–3, chưa triển khai trong nhánh này.
 
-**Cho Codex tiếp tục ở phiên/máy khác:** [AGENTS.md](AGENTS.md) chỉ dẫn đọc [bản bàn giao ngữ cảnh](docs/HANDOFF.md), gồm mục tiêu, quyết định đã chốt, trạng thái và việc còn lại. [Hướng dẫn Ubuntu](docs/ubuntu-setup.md) phục vụ môi trường cá nhân của người dùng chính; cả nhóm không bắt buộc dùng Ubuntu hoặc Docker.
-
 ## Yêu cầu môi trường
 
 - MySQL **8.4**, InnoDB, bộ ký tự `utf8mb4`; không thay bằng MariaDB hoặc MySQL 5.7.
@@ -23,13 +21,12 @@ database/
   06_verify.sql              # đếm dòng và truy vấn minh chứng
   tests/test_constraints.py  # kiểm thử tích hợp, có ca cố ý vi phạm
 scripts/
-  bootstrap.sh              # dựng CSDL bằng một phiên client trên Ubuntu/CI
+  bootstrap.sh              # dựng CSDL bằng một phiên client qua Bash
   mysql-docker.sh           # dùng client trong container nếu không có client native
 docs/
-  HANDOFF.md                # toàn bộ ngữ cảnh/điểm đã chốt để tiếp tục
-  ubuntu-setup.md           # hướng dẫn chuyển sang Ubuntu
   constraints.md            # đối chiếu từng yêu cầu BTL1 với cách hiện thực
   design-decisions.md       # giải thích các thay đổi và giới hạn
+  part1-test-results.md      # kết quả kiểm thử phần 1
 ```
 
 ## Chạy từ database trống
@@ -53,7 +50,7 @@ SOURCE database/05_reports.sql;
 SOURCE database/06_verify.sql;
 ```
 
-Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Trên Ubuntu có thể dùng `bash scripts/bootstrap.sh -u root -p` để chạy toàn bộ trong một phiên. Không dùng tùy chọn `--force` khi cài đặt vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
+Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Nếu có Bash, có thể dùng `bash scripts/bootstrap.sh -u root -p` để chạy toàn bộ trong một phiên. Không dùng tùy chọn `--force` khi cài đặt vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
 
 ## Dữ liệu mẫu
 
@@ -120,7 +117,7 @@ python database/tests/test_constraints.py --mysql mysql --host 127.0.0.1 --port 
 
 Các thao tác thay đổi thử nghiệm được rollback; user tạm được xóa ở cuối ca kiểm thử. Sau đó có thể chạy lại `06_verify.sql`. Không công bố phần 1 hoàn tất chỉ vì tạo đủ bảng: cần đọc ma trận ràng buộc, chạy các ca hợp lệ/vi phạm và kiểm tra kết quả thực tế.
 
-GitHub Actions `Part 1 MySQL` chạy cùng bootstrap/test trên Ubuntu 24.04, MySQL 8.4.7. Xem kết quả cụ thể của commit/PR. Xác thực bằng Unix socket trên Ubuntu được hỗ trợ qua `--socket`; hướng dẫn chi tiết ở ubuntu-setup.md.
+GitHub Actions `Part 1 MySQL` tự động dựng CSDL và chạy kiểm thử bằng MySQL 8.4.7. Xem kết quả cụ thể của commit/PR. Kết quả kiểm thử phần 1 được ghi tại [docs/part1-test-results.md](docs/part1-test-results.md).
 
 ## Phạm vi phần tiếp theo
 

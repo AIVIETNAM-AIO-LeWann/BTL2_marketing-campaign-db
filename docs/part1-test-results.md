@@ -12,7 +12,7 @@ Ngày chạy: 10/11/2026. Runtime kiểm thử: MySQL Community Server **8.4.7**
 python database/tests/test_constraints.py --mysql <mysql-client> --port 33077
 ```
 
-Kết quả sau rà soát sâu: **81 tests, OK**. Đã dựng lại từ database trống bằng toàn bộ SQL trong **cùng một phiên client**, đúng cách bootstrap trên Ubuntu. Bao gồm:
+Kết quả sau rà soát sâu: **81 tests, OK**. Đã dựng lại từ database trống bằng toàn bộ SQL trong **cùng một phiên client**, theo quy trình bootstrap của dự án. Bao gồm:
 
 - PK, FK, UNIQUE, NOT NULL, CHECK định dạng và miền giá trị.
 - Kiểm tra đúng 15 bảng, tối thiểu 5 dòng mỗi bảng, InnoDB và tiếng Việt UTF-8.
