@@ -1,0 +1,47 @@
+name: Part 1 MySQL
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/part1-database]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mysql-part1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4.7
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-part1
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 33077:3306
+        options: >-
+          --health-cmd="mysqladmin ping --protocol=TCP -h 127.0.0.1 -pci-only-part1"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      MYSQL_PWD: ci-only-part1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mysql-client
+      - name: Build a fresh database in one session
+        run: bash scripts/bootstrap.sh --protocol=TCP -h 127.0.0.1 -P 33077 -u root
+      - name: Run integrity and workflow tests
+        run: python3 database/tests/test_constraints.py --mysql mysql --host 127.0.0.1 --port 33077 --user root
+      - name: Test Docker client wrapper and Unix socket
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          socket=$(docker exec -e MYSQL_PWD "$MYSQL_CONTAINER" mysql -u root -Nse 'SELECT @@socket;')
+          python3 database/tests/test_constraints.py --mysql "$PWD/scripts/mysql-docker.sh" --socket "$socket" --user root

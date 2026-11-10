@@ -2,6 +2,8 @@
 
 Phần 1: hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu. Procedure CRUD `KhoanChi`, hai procedure truy vấn, hai function nghiệp vụ, trigger lưu tổng chi phí và ứng dụng web thuộc phần 2–3, chưa triển khai trong nhánh này.
 
+**Chuyển từ Windows sang Ubuntu:** bắt đầu bằng [bàn giao ngữ cảnh](docs/HANDOFF.md), sau đó làm theo [hướng dẫn Ubuntu](docs/ubuntu-setup.md). Tài liệu ghi rõ quyết định đã chốt, cách dựng MySQL native/Docker, chạy SQL và test, cùng việc còn lại. Không cần mang runtime MySQL tạm từ Windows sang.
+
 ## Yêu cầu môi trường
 
 - MySQL **8.4**, InnoDB, bộ ký tự `utf8mb4`; không thay bằng MariaDB hoặc MySQL 5.7.
@@ -20,7 +22,12 @@ database/
   05_reports.sql             # view tính thời lượng, chi phí và tỷ lệ
   06_verify.sql              # đếm dòng và truy vấn minh chứng
   tests/test_constraints.py  # kiểm thử tích hợp, có ca cố ý vi phạm
+scripts/
+  bootstrap.sh              # dựng CSDL bằng một phiên client trên Ubuntu/CI
+  mysql-docker.sh           # dùng client trong container nếu không có client native
 docs/
+  HANDOFF.md                # toàn bộ ngữ cảnh/điểm đã chốt để tiếp tục
+  ubuntu-setup.md           # hướng dẫn chuyển sang Ubuntu
   constraints.md            # đối chiếu từng yêu cầu BTL1 với cách hiện thực
   design-decisions.md       # giải thích các thay đổi và giới hạn
 ```
@@ -46,7 +53,7 @@ SOURCE database/05_reports.sql;
 SOURCE database/06_verify.sql;
 ```
 
-Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Không dùng tùy chọn `--force` vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
+Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Trên Ubuntu có thể dùng `bash scripts/bootstrap.sh -u root -p` để chạy toàn bộ trong một phiên. Không dùng tùy chọn `--force` khi cài đặt vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
 
 ## Dữ liệu mẫu
 
@@ -82,6 +89,8 @@ MySQL/InnoDB không có deferred constraint để chờ đến `COMMIT` mới ki
 
 Xem lời gọi hoàn chỉnh trong file 04. Mỗi workflow giữ khóa ghi, tạo các dòng trong một giao dịch, kiểm tra toàn bộ bất biến trước khi commit và rollback nếu có lỗi. Gọi workflow ở cấp ngoài cùng, không bọc trong giao dịch khác.
 
+Đầu vào JSON kiểm tra trường bắt buộc và kiểu dữ liệu trước khi chuyển sang cột SQL. JSON null ở trường bắt buộc bị từ chối; trường tùy chọn giữ SQL NULL. Ngày phải hợp lệ, ngân sách JSON là số nguyên VND. Workflow bị gọi lồng sẽ không commit/rollback giao dịch ngoài, không đổi cờ hoặc giải phóng khóa của bên gọi.
+
 Biến phiên `@p1_internal` chỉ giúp trì hoãn kiểm tra toàn phần bên trong workflow; **không phải cơ chế phân quyền**. Role `marketing_p1` chỉ có SELECT và EXECUTE ba workflow hoàn chỉnh, không có quyền ghi bảng hay gọi helper nội bộ. Không cấp quyền ghi thẳng cho user ứng dụng. Các procedure phần 2 cần dùng cùng nguyên tắc giao dịch/khóa và kiểm tra trước commit.
 
 Tài khoản quản trị có quyền thay đổi schema, trigger hoặc biến phiên luôn là tài khoản tin cậy. Không dùng root làm tài khoản ứng dụng.
@@ -110,6 +119,8 @@ python database/tests/test_constraints.py --mysql mysql --host 127.0.0.1 --port 
 ```
 
 Các thao tác thay đổi thử nghiệm được rollback; user tạm được xóa ở cuối ca kiểm thử. Sau đó có thể chạy lại `06_verify.sql`. Không công bố phần 1 hoàn tất chỉ vì tạo đủ bảng: cần đọc ma trận ràng buộc, chạy các ca hợp lệ/vi phạm và kiểm tra kết quả thực tế.
+
+GitHub Actions `Part 1 MySQL` chạy cùng bootstrap/test trên Ubuntu 24.04, MySQL 8.4.7. Xem kết quả cụ thể của commit/PR. Xác thực bằng Unix socket trên Ubuntu được hỗ trợ qua `--socket`; hướng dẫn chi tiết ở ubuntu-setup.md.
 
 ## Phạm vi phần tiếp theo
 

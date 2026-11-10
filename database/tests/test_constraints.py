@@ -18,6 +18,7 @@ parser.add_argument('--mysql', default='mysql')
 parser.add_argument('--host', default='127.0.0.1')
 parser.add_argument('--port', default='3306')
 parser.add_argument('--user', default='root')
+parser.add_argument('--socket', help='Unix socket for native Ubuntu MySQL (overrides host/port)')
 args, remaining = parser.parse_known_args()
 TABLES = ['NhanVien','TaiKhoan','SoDienThoaiNhanVien','ThuongHieu','KenhMarketing',
           'ChienDich','PhanCong','HoatDongTrienKhai','HoatDongEmail','DanhSachNhanEmail',
@@ -26,13 +27,20 @@ TABLES = ['NhanVien','TaiKhoan','SoDienThoaiNhanVien','ThuongHieu','KenhMarketin
 def sql_literal(value):
     return "'" + value.replace('\\','\\\\').replace("'","''") + "'"
 
+def client_command(user=None):
+    cmd=[args.mysql]
+    if args.socket:
+        cmd += ['--protocol=SOCKET','--socket='+args.socket]
+    else:
+        cmd += ['--protocol=TCP','-h',args.host,'-P',args.port]
+    return cmd+['-u',user or args.user,'--default-character-set=utf8mb4',
+                '--batch','--raw','--skip-column-names']
+
 def run(sql, user=None, password=None):
     env = os.environ.copy()
     if password is not None:
         env['MYSQL_PWD'] = password
-    cmd = [args.mysql, '--protocol=TCP', '-h', args.host, '-P', args.port,
-           '-u', user or args.user, '--default-character-set=utf8mb4', '--batch',
-           '--raw', '--skip-column-names', 'marketing_btl']
+    cmd = client_command(user)+['marketing_btl']
     return subprocess.run(cmd, input=sql, encoding='utf-8', errors='replace',
                           capture_output=True, env=env, timeout=30)
 
@@ -117,7 +125,7 @@ class Constraints(unittest.TestCase):
         self.reject("UPDATE PhanCong SET NgayBatDauThamGia='2026-11-10' WHERE MaNhanVien='NV04' AND MaChienDich='CD01';", 'RB05')
 
     def test_rb06_self(self):
-        self.reject("UPDATE NhanVien SET MaNguoiGiamSat='NV04' WHERE MaNhanVien='NV04';", 'RB06')
+        self.reject("UPDATE NhanVien SET MaNguoiGiamSat='NV04' WHERE MaNhanVien='NV04';", 'ck_nv_khong_tu_giamsat')
 
     def test_rb06_indirect_cycle(self):
         self.reject("UPDATE NhanVien SET MaNguoiGiamSat='NV04' WHERE MaNhanVien='NV01';", 'RB06')
@@ -308,6 +316,92 @@ class Constraints(unittest.TestCase):
             self.assertEqual(r.returncode,0,r.stderr)
         finally:
             self.ok(f'DROP USER {account};')
+
+    def employee_payload(self):
+        return ({'MaNhanVien':'TEST_JSON','Ho':'Test','Ten':'Validation',
+                 'Email':'test@example.com','NgayVaoLam':'2026-01-01'},
+                {'MaTK':'TEST_JSON_TK','TenDangNhap':'test_json','MatKhauBam':'x'*60,
+                 'VaiTro':'NHAN_VIEN_MARKETING'})
+
+    def employee_call(self,nv,tk):
+        return 'CALL sp_P1_TaoNhanVien('+','.join(sql_literal(json.dumps(x)) for x in [nv,tk])+');'
+
+    def test_required_json_null_rejected(self):
+        for field in ['MaNhanVien','Ho','Ten','Email','NgayVaoLam']:
+            with self.subTest(field=field):
+                nv,tk=self.employee_payload()
+                nv[field]=None
+                r=run(self.employee_call(nv,tk))
+                self.assertNotEqual(r.returncode,0,r.stdout)
+                self.assertIn('P1_INPUT',r.stderr)
+
+    def test_json_wrong_scalar_type_rejected(self):
+        nv,tk=self.employee_payload()
+        nv['Ho']=123
+        r=run(self.employee_call(nv,tk))
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('P1_INPUT',r.stderr)
+
+    def test_json_missing_field_rejected(self):
+        nv,tk=self.employee_payload()
+        del nv['Ho']
+        r=run(self.employee_call(nv,tk))
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('P1_INPUT',r.stderr)
+
+    def test_json_optional_null_preserved(self):
+        self.assertEqual(self.ok("SELECT TenDem IS NULL FROM NhanVien WHERE MaNhanVien='NV08';"),'1')
+
+    def test_json_string_array_item_required(self):
+        r=run(self.activity_call([None]))
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('P1_INPUT',r.stderr)
+        self.assert_no_test_activity()
+
+    def test_json_noninteger_vnd_rejected(self):
+        r=run(self.activity_call(['DS01'],1000.5))
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('P1_INPUT',r.stderr)
+        self.assert_no_test_activity()
+
+    def test_empty_primary_key_rejected(self):
+        self.reject("INSERT INTO ThuongHieu(MaThuongHieu,TenThuongHieu) VALUES ('','Empty key');",'ck_th_ma')
+
+    def test_zero_date_even_with_relaxed_caller_mode(self):
+        self.reject("SET SESSION sql_mode='STRICT_TRANS_TABLES'; UPDATE NhanVien SET NgayVaoLam='0000-00-00' WHERE MaNhanVien='NV04';",'ck_nv_ngay')
+
+    def test_partial_zero_date_even_with_relaxed_caller_mode(self):
+        self.reject("SET SESSION sql_mode='STRICT_TRANS_TABLES'; UPDATE NhanVien SET NgayVaoLam='2026-00-01' WHERE MaNhanVien='NV04';",'ck_nv_ngay')
+
+    def test_workflow_rejects_invalid_calendar_date(self):
+        nv,tk=self.employee_payload()
+        nv['NgayVaoLam']='2026-02-30'
+        r=run(self.employee_call(nv,tk))
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('Incorrect date',r.stderr)
+        self.assertEqual(self.ok("SELECT COUNT(*) FROM NhanVien WHERE MaNhanVien='TEST_JSON';"),'0')
+
+    def test_nested_workflow_keeps_caller_transaction_and_lock(self):
+        nv,tk=self.employee_payload()
+        # --force is confined to this deliberate error test, so SELECT can inspect
+        # the same session AFTER a rejected call. Never use it for installation.
+        sql=("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED; START TRANSACTION; "
+             "UPDATE ThuongHieu SET MoTa='uncommitted-review' WHERE MaThuongHieu='TH01'; "
+             "SET @p1_internal=7; "+self.employee_call(nv,tk)+
+             " SELECT IS_USED_LOCK('marketing_btl.integrity')=CONNECTION_ID(), @p1_internal; ROLLBACK;")
+        cmd=client_command()+['--force','marketing_btl']
+        r=subprocess.run(cmd,input=sql,encoding='utf-8',errors='replace',capture_output=True,timeout=30)
+        self.assertIn('Transaction characteristics',r.stderr)
+        self.assertIn('1\t7',r.stdout)
+        self.assertEqual(self.ok("SELECT MoTa='uncommitted-review' FROM ThuongHieu WHERE MaThuongHieu='TH01';"),'0')
+        self.assertEqual(self.ok("SELECT COUNT(*) FROM NhanVien WHERE MaNhanVien='TEST_JSON';"),'0')
+
+    def test_multirow_failure_rolls_back_entire_statement(self):
+        self.reject("INSERT INTO HoatDongEmail_DanhSach VALUES ('HD01','DS06'),('HD01','DS02');",'RB10')
+        self.assertEqual(self.ok("SELECT COUNT(*) FROM HoatDongEmail_DanhSach WHERE MaHoatDong='HD01' AND MaDanhSach='DS06';"),'0')
+
+    def test_reports_do_not_multiply_expenses(self):
+        self.assertEqual(self.ok("SELECT TongChiPhiThucTe FROM v_ChiPhiHoatDong WHERE MaHoatDong='HD01';"),'3000000')
 
 if __name__=='__main__':
     unittest.main(argv=[sys.argv[0]]+remaining,verbosity=2)

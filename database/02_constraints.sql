@@ -1,5 +1,6 @@
 USE marketing_btl;
 SET NAMES utf8mb4;
+SET SESSION sql_mode = 'STRICT_TRANS_TABLES,ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 DELIMITER $$
 
 -- A connection-level lock serializes write workflows for this small assignment.

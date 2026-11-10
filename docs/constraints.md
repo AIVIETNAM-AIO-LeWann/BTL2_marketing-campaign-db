@@ -17,7 +17,7 @@ Nguồn: đặc tả BTL1 marketing của nhóm, bổ sung quyết định chuy�
 | **RB03** thời gian phân công | CHECK thứ tự ngày; validator so với chiến dịch | Sửa phân công **và sửa thời gian chiến dịch** |
 | **RB04** người chịu trách nhiệm chính | Validator kiểm tra phân công bao phủ toàn chiến dịch và VaiTro của tài khoản là QUAN_LY_MARKETING | Đổi người chính, thời gian chiến dịch/phân công, xóa phân công, đổi vai trò |
 | **RB05** người phụ trách hoạt động | Validator kiểm tra cùng chiến dịch và phân công bao phủ thời gian hoạt động | Đổi người phụ trách/chiến dịch/thời gian hoạt động, sửa/xóa phân công |
-| **RB06** giám sát hợp lệ | Validator dùng CTE đệ quy phát hiện tự giám sát và chu trình nhiều cấp | INSERT/UPDATE nhân viên |
+| **RB06** giám sát hợp lệ | CHECK chặn tự giám sát; validator dùng CTE đệ quy phát hiện chu trình nhiều cấp | INSERT/UPDATE nhân viên |
 | **RB07** ngân sách | CHECK các ngân sách không âm; validator SUM ngân sách hoạt động <= ngân sách chiến dịch | INSERT/UPDATE hoạt động, đổi chiến dịch, **giảm ngân sách chiến dịch** |
 | **RB08** khoản chi, tiền tệ | CHECK SoTien > 0; DECIMAL tiền VND; view tổng chi và chênh lệch; không chặn thực chi vượt ngân sách | INSERT/UPDATE khoản chi; truy vấn chênh lệch |
 | **RB09** loại hoạt động/kênh | CHECK nhóm kênh và định dạng; validator khớp lớp con, nhóm kênh, kênh tài khoản MXH với hoạt động | Sửa lớp con, hoạt động, nhóm kênh, kênh tài khoản |
@@ -36,6 +36,8 @@ Tài khoản người ghi phải hoạt động **khi ghi/cập nhật**. Sau n�
 Nhóm bổ sung chính sách không mở lại chiến dịch/hoạt động đã hoàn thành hoặc hủy; xóa dữ liệu lịch sử bị chặn, không chỉ tránh tự động xóa. Đây là lựa chọn triển khai để giữ lịch sử, cần đưa vào bản mô tả cập nhật.
 
 ## Bảo đảm toàn phần trong MySQL
+
+Ngày 0/tháng 0 và mã định danh rỗng bị chặn bằng CHECK. SQL mode được đặt nhất quán khi tạo routine/trigger, kể cả chạy sáu file trong cùng một phiên. Workflow kiểm tra kiểu/trường JSON để giá trị JSON null không biến thành chuỗi văn bản 'null' ở cột bắt buộc.
 
 Trigger kiểm tra toàn bộ bất biến sau mỗi dòng khi ghi trực tiếp. Tạo các đối tượng bắt buộc đi cùng nhau phải dùng workflow file 03: tạm hoãn các kiểm tra liên bảng bên trong giao dịch, kiểm tra lại đầy đủ trước COMMIT. PK/FK/CHECK vẫn luôn hoạt động. Nếu có lỗi, toàn bộ workflow rollback.
 

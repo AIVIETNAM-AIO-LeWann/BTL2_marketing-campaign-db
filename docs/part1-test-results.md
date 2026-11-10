@@ -12,7 +12,7 @@ Ngày chạy: 10/11/2026. Runtime kiểm thử: MySQL Community Server **8.4.7**
 python database/tests/test_constraints.py --mysql <mysql-client> --port 33077
 ```
 
-Kết quả: **68 tests, OK**. Bao gồm:
+Kết quả sau rà soát sâu: **81 tests, OK**. Đã dựng lại từ database trống bằng toàn bộ SQL trong **cùng một phiên client**, đúng cách bootstrap trên Ubuntu. Bao gồm:
 
 - PK, FK, UNIQUE, NOT NULL, CHECK định dạng và miền giá trị.
 - Kiểm tra đúng 15 bảng, tối thiểu 5 dòng mỗi bảng, InnoDB và tiếng Việt UTF-8.
@@ -23,6 +23,12 @@ Kết quả: **68 tests, OK**. Bao gồm:
 - Chặn hoàn thành sớm, xóa lịch sử, ghi dữ liệu bằng tài khoản đã khóa.
 - Workflow thất bại phải rollback cả cha/con: trùng tài khoản, email thiếu danh sách, sai thương hiệu, vượt ngân sách.
 - Role giới hạn không thể tự đặt biến phiên rồi ghi trực tiếp để bỏ qua kiểm tra; tài khoản thử nghiệm được tạo/xóa trong ca này.
+- JSON null/sai kiểu/thiếu trường ở đầu vào bắt buộc bị chặn; null ở trường tùy chọn được giữ đúng. Ngân sách không nhận phần lẻ VND trong JSON.
+- Ngày 0000-00-00 hoặc có tháng 0 bị chặn cả khi caller giảm SQL mode; ngày lịch không hợp lệ bị từ chối.
+- Mã định danh rỗng và tự giám sát được kiểm tra trong CREATE TABLE.
+- Lời gọi workflow lồng không làm mất khóa/cờ/giao dịch của caller; câu lệnh nhiều dòng thất bại rollback toàn bộ câu lệnh.
+
+Đợt review đã tái hiện và sửa ba nhóm lỗi của bản 68-test: JSON null thành chuỗi 'null', chấp nhận ngày zero khi SQL mode thiếu tùy chọn, và handler giải phóng nhầm khóa/cờ của giao dịch ngoài. Các ca hồi quy đã được đưa vào bộ test.
 
 Kết quả minh họa: HD01 được cấp 2.000.000 VND và thực chi 3.000.000 VND; chênh lệch +1.000.000 được chấp nhận. DS06/MXH06 chưa được sử dụng nhưng xác định được thương hiệu sở hữu TH01. CPA bằng NULL khi chuyển đổi bằng 0 hoặc chưa biết.
 
