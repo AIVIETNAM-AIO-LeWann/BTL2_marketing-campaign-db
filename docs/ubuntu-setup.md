@@ -163,6 +163,7 @@ Lần sau dùng `docker start`, nhập lại mật khẩu cho client và chạy 
 | P1_INPUT | JSON thiếu trường, trường bắt buộc là null, sai kiểu hoặc sai tên thuộc tính; xem ví dụ 04_seed.sql. |
 | Transaction characteristics... | Đã gọi workflow trong giao dịch có sẵn; hoàn tất giao dịch ngoài trước. |
 | Permission denied khi chạy wrapper | `chmod +x scripts/mysql-docker.sh`; file .sh được giữ LF bằng .gitattributes. |
+| Test role lỗi đăng nhập khi client ở ngoài container | User thử nghiệm phải nhận kết nối từ Docker host; bộ test đã dùng user tạm tên/mật khẩu ngẫu nhiên, role giới hạn và caching_sha2_password. Không bật mysql_native_password để chữa lỗi này. |
 | Không có mysql/Node trên Windows | Không ảnh hưởng chuyển mã; dựng phần 1 ở Ubuntu theo hướng dẫn. Web chưa cần cài. |
 
 CI trên GitHub chạy Ubuntu 24.04 với server MySQL 8.4.7. Kết quả chạy trên máy Ubuntu riêng vẫn cần được xác nhận; CI xanh không tự chứng minh cấu hình máy cục bộ đã đúng.

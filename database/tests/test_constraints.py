@@ -306,8 +306,12 @@ class Constraints(unittest.TestCase):
     def test_role_cannot_bypass_deferred_checks(self):
         name='p1_test_'+secrets.token_hex(4)
         password=secrets.token_urlsafe(24)
-        account=sql_literal(name)+"@'localhost'"
-        self.ok(f"CREATE USER {account} IDENTIFIED BY {sql_literal(password)}; GRANT 'marketing_p1' TO {account}; SET DEFAULT ROLE 'marketing_p1' TO {account};")
+        # The TCP client can be on the Docker host, not localhost from MySQL's
+        # perspective. This temporary account is restricted to marketing_p1,
+        # has a random password, and is removed in finally. It also works via
+        # Unix socket. Do not enable the obsolete mysql_native_password plugin.
+        account=sql_literal(name)+"@'%'"
+        self.ok(f"CREATE USER {account} IDENTIFIED WITH caching_sha2_password BY {sql_literal(password)}; GRANT 'marketing_p1' TO {account}; SET DEFAULT ROLE 'marketing_p1' TO {account};")
         try:
             r=run("SET @p1_internal=1; UPDATE ChienDich SET NganSachDuocDuyet=1 WHERE MaChienDich='CD01';",user=name,password=password)
             self.assertNotEqual(r.returncode,0)
