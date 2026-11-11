@@ -255,7 +255,7 @@ class Constraints(unittest.TestCase):
         self.reject("INSERT INTO NhanVien VALUES ('TEST_NV','Test',NULL,'Orphan','test@example.com','2026-01-01',NULL);", 'EER_ACCOUNT')
 
     def test_direct_orphan_activity_rejected(self):
-        self.reject("INSERT INTO HoatDongTrienKhai VALUES ('TEST_HD','Orphan',NULL,'2026-11-05','2026-11-10',0,'CHUA_BAT_DAU','K_EMAIL_A','CD01','NV04');", 'EER_TOTAL')
+        self.reject("INSERT INTO HoatDongTrienKhai(MaHoatDong,TenHoatDong,MoTa,NgayBatDau,NgayKetThucDuKien,NganSachDuocCap,TrangThai,MaKenh,MaChienDich,MaNhanVien) VALUES ('TEST_HD','Orphan',NULL,'2026-11-05','2026-11-10',0,'CHUA_BAT_DAU','K_EMAIL_A','CD01','NV04');", 'EER_TOTAL')
 
     def activity_call(self, lists, budget=1000):
         h={'MaHoatDong':'TEST_HD','TenHoatDong':'Test atomic activity','NgayBatDau':'2026-11-05',
