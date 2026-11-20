@@ -421,7 +421,7 @@ END$$
 DELIMITER ;
 
 -- =====================================================================
--- 7. MINH HỌA (chạy từng ca khi báo cáo; mọi ca chạy được trên seed sạch + gói B)
+-- *. MINH HỌA (chạy từng ca khi báo cáo; mọi ca chạy được trên seed sạch + gói B)
 --    Dùng MySQL client. Mỗi lệnh gọi tự quản lý giao dịch nên KHÔNG đặt START TRANSACTION trước
 --    (trừ ca 14a cố ý). Nhóm 1 chạy theo thứ tự 1 -> 5 (thêm rồi sửa rồi chuyển rồi xóa cùng KC_T1);
 --    các ca còn lại độc lập. Ca lỗi không để lại dữ liệu; sau mọi ca chạy ca 15 để đối soát.
