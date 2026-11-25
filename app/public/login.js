@@ -1,15 +1,41 @@
 import './ambient.js';
 import './validity-vi.js';
+import { burstFromElement, initFX } from './fx.js';
+import { initMotion, shakeElement, transitionTheme } from './motion.js';
 
 const form = document.getElementById('login-form');
 const password = document.getElementById('password');
 const toggle = document.getElementById('password-toggle');
+const themeBtn = document.getElementById('login-theme-toggle');
 const submit = document.getElementById('login-submit');
 const error = document.getElementById('login-error');
+const root = document.documentElement;
+
+initMotion({ navSelector: null });
+initFX();
+
+function applyTheme(dark) {
+  root.dataset.theme = dark ? 'dark' : 'light';
+  if (!themeBtn) return;
+  themeBtn.setAttribute('aria-pressed', String(dark));
+  themeBtn.title = dark ? 'Chuyển sang giao diện sáng' : 'Bật giao diện tối';
+  themeBtn.querySelector('use').setAttribute('href', dark ? '/icons.svg#sun' : '/icons.svg#moon');
+}
 
 try {
-  document.documentElement.dataset.theme = localStorage.getItem('campaign-desk-theme') === 'dark' ? 'dark' : 'light';
-} catch { /* The default theme still works when browser storage is unavailable. */ }
+  applyTheme(localStorage.getItem('campaign-desk-theme') !== 'light');
+} catch {
+  applyTheme(true);
+}
+
+themeBtn?.addEventListener('click', () => {
+  const nextDark = root.dataset.theme !== 'dark';
+  burstFromElement(themeBtn, { count: 18, spread: 4.8 });
+  transitionTheme(themeBtn, () => {
+    applyTheme(nextDark);
+    try { localStorage.setItem('campaign-desk-theme', root.dataset.theme); } catch { /* ignore */ }
+  });
+});
 
 toggle.addEventListener('click', () => {
   const reveal = password.type === 'password';
@@ -17,7 +43,12 @@ toggle.addEventListener('click', () => {
   const label = reveal ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
   toggle.title = label;
   toggle.setAttribute('aria-label', label);
-  toggle.querySelector('use').setAttribute('href', reveal ? '/icons.svg#eye-off' : '/icons.svg#eye');
+  const use = toggle.querySelector('use');
+  use.setAttribute('href', reveal ? '/icons.svg#eye-off' : '/icons.svg#eye');
+  toggle.querySelector('svg')?.animate?.(
+    [{ transform: 'scale(.72) rotate(-14deg)' }, { transform: 'scale(1) rotate(0deg)' }],
+    { duration: 240, easing: 'cubic-bezier(.32, 1.24, .5, 1)' },
+  );
 });
 
 form.addEventListener('submit', async event => {
@@ -39,7 +70,8 @@ form.addEventListener('submit', async event => {
       password.type = 'password';
       password.value = '';
       submit.textContent = 'Đang mở Campaign Desk…';
-      window.location.replace('/');
+      burstFromElement(submit, { count: 38, spread: 7.5, intensity: 1.15 });
+      setTimeout(() => window.location.replace('/'), 340);
       return;
     }
     const result = await response.json().catch(() => ({}));
@@ -49,6 +81,7 @@ form.addEventListener('submit', async event => {
   } finally {
     if (!navigating) {
       error.hidden = false;
+      shakeElement(error);
       submit.disabled = false;
       submit.textContent = 'Đăng nhập';
       form.removeAttribute('aria-busy');

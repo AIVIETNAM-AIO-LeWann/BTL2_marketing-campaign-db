@@ -11,19 +11,27 @@
   <script type="module" src="/login.js"></script>
 </head>
 <body class="login-page">
-  <div class="ambient" aria-hidden="true"></div>
-  <button class="icon-button login-motion" type="button" data-ambient-toggle aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
+  <div class="ambient" aria-hidden="true">
+    <span class="ambient-orb orb-1"></span>
+    <span class="ambient-orb orb-2"></span>
+    <span class="ambient-orb orb-3"></span>
+  </div>
+  <div class="login-controls">
+    <button id="login-theme-toggle" class="icon-button login-control-btn" type="button" data-magnetic="2.5" aria-label="Chuyển giao diện sáng/tối" aria-pressed="false" title="Chuyển giao diện sáng/tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
+    <button class="icon-button login-control-btn" type="button" data-ambient-toggle data-magnetic="2.5" aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
+  </div>
   <main class="login-layout">
-    <aside class="login-intro" aria-label="Giới thiệu Campaign Desk">
-      <div class="login-brand"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><strong>Campaign Desk</strong></div>
+    <aside class="login-intro" aria-label="Giới thiệu Campaign Desk" data-spotlight data-beam>
+      <div class="login-brand"><span class="brand-icon" data-magnetic="3"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><span><strong>Campaign Desk</strong><small class="login-brand-sub"><span class="live-dot" aria-hidden="true"></span>Marketing đa kênh</small></span></div>
       <div class="login-art" aria-hidden="true">
-        <div class="art-rings"><span class="art-orbit"></span></div>
-        <div class="art-bars"><i></i><i></i><i></i><i></i><i></i></div>
-        <span class="art-chip art-chip-receipt"><svg><use href="/icons.svg#receipt-text"/></svg></span>
-        <span class="art-chip art-chip-target"><svg><use href="/icons.svg#target"/></svg></span>
+        <div class="art-rings" data-parallax="-12"><span class="art-orbit"></span></div>
+        <div class="art-bars" data-parallax="10"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="art-chip art-chip-receipt" data-parallax="24"><svg><use href="/icons.svg#receipt-text"/></svg></span>
+        <span class="art-chip art-chip-target" data-parallax="-20"><svg><use href="/icons.svg#target"/></svg></span>
+        <div class="art-pill" data-parallax="18"><svg><use href="/icons.svg#trending-up"/></svg><span>Thực chi &amp; CPA thời gian thực</span></div>
       </div>
       <div class="login-intro-copy">
-        <p class="login-product">Marketing đa kênh</p>
+        <p class="login-product">Phân tích ngân sách &amp; hiệu quả</p>
         <p class="login-headline">Quản lý chi phí chiến dịch</p>
         <p>Theo dõi khoản chi, ngân sách và chi phí chuyển đổi trong cùng một bảng điều khiển.</p>
       </div>
@@ -31,7 +39,7 @@
 
     <section class="login-side" aria-labelledby="login-title">
       <div class="login-brand mobile-brand"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><strong>Campaign Desk</strong></div>
-      <div class="login-card">
+      <div class="login-card" data-spotlight data-tilt="1.5">
         <div class="login-sign" aria-hidden="true"><svg><use href="/icons.svg#lock-keyhole"/></svg></div>
         <h1 id="login-title">Đăng nhập</h1>
         <p class="login-copy">Sử dụng tài khoản demo do nhóm cung cấp.</p>
@@ -48,7 +56,7 @@
             <button class="password-toggle" id="password-toggle" type="button" aria-label="Hiện mật khẩu" aria-controls="password" title="Hiện mật khẩu"><svg aria-hidden="true"><use href="/icons.svg#eye"/></svg></button>
           </div>
           <p id="login-error" class="form-error" role="alert" hidden></p>
-          <button id="login-submit" class="primary login-submit" type="submit">Đăng nhập</button>
+          <button id="login-submit" class="primary login-submit" type="submit" data-magnetic="3.5" data-beam>Đăng nhập</button>
           <noscript><p class="login-copy">Bật JavaScript trong trình duyệt để đăng nhập.</p></noscript>
         </form>
       </div>
