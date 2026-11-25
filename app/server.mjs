@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import mysql from 'mysql2/promise';
@@ -21,6 +22,10 @@ const staticFiles = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/ambient.js', ['ambient.js', 'text/javascript; charset=utf-8']],
+  ['/motion.js', ['motion.js', 'text/javascript; charset=utf-8']],
+  ['/fx.js', ['fx.js', 'text/javascript; charset=utf-8']],
+  ['/validity-vi.js', ['validity-vi.js', 'text/javascript; charset=utf-8']],
+  ['/palette.js', ['palette.js', 'text/javascript; charset=utf-8']],
   ['/login.css', ['login.css', 'text/css; charset=utf-8']],
   ['/login.js', ['login.js', 'text/javascript; charset=utf-8']],
   ['/icons.svg', ['icons.svg', 'image/svg+xml']],
@@ -36,6 +41,7 @@ const sessionSeconds = 8 * 60 * 60;
 const sessions = new Map();
 let loginWindowEnd = 0;
 let failedLogins = 0;
+const failedByClient = new Map();
 
 function activeSession(request) {
   const key = request.headers.cookie?.match(/(?:^|;\s*)campaign_desk_session=([a-f0-9]{64})(?:;|$)/)?.[1];
@@ -58,8 +64,16 @@ async function login(request, response) {
     loginWindowEnd = now + 60_000;
     failedLogins = 0;
   }
-  if (failedLogins >= 12) {
-    response.setHeader('Retry-After', String(Math.max(1, Math.ceil((loginWindowEnd - now) / 1000))));
+  // Mỗi người một bộ đếm riêng để một người nhập sai không khóa người khác; tổng chung giữ trần cho việc dò mật khẩu.
+  // cf-connecting-ip do cloudflared đặt; Node chỉ nghe loopback nên không ai ngoài đường hầm tự đặt được.
+  // Giá trị header không phải địa chỉ IP hợp lệ thì dùng địa chỉ kết nối thật, để không tạo khóa tùy ý.
+  const forwarded = request.headers['cf-connecting-ip'];
+  const client = isIP(forwarded ?? '') ? forwarded : (request.socket.remoteAddress ?? '');
+  let mine = failedByClient.get(client);
+  if (mine && now >= mine.windowEnd) { failedByClient.delete(client); mine = undefined; }
+  if ((mine?.failures ?? 0) >= 12 || failedLogins >= 120) {
+    const resetAt = (mine?.failures ?? 0) >= 12 ? mine.windowEnd : loginWindowEnd;
+    response.setHeader('Retry-After', String(Math.max(1, Math.ceil((resetAt - now) / 1000))));
     return send(response, 429, { error: 'Đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.' });
   }
   const username = string(body.username, 'Tên đăng nhập', 64);
@@ -67,6 +81,16 @@ async function login(request, response) {
   const validPassword = timingSafeEqual(digest(password), expectedPassword);
   if (username !== 'demo' || !validPassword) {
     failedLogins++;
+    if (!mine) {
+      // Chỉ lưu người đã nhập sai, và giữ tối đa 1000 người: bỏ mục hết hạn trước, rồi bỏ mục cũ nhất.
+      if (failedByClient.size >= 1000) {
+        for (const [key, entry] of failedByClient) if (now >= entry.windowEnd) failedByClient.delete(key);
+        while (failedByClient.size >= 1000) failedByClient.delete(failedByClient.keys().next().value);
+      }
+      mine = { failures: 0, windowEnd: now + 60_000 };
+      failedByClient.set(client, mine);
+    }
+    mine.failures++;
     return send(response, 401, { error: 'Tên đăng nhập hoặc mật khẩu không đúng.' });
   }
   for (const [key, expiresAt] of sessions) {
@@ -235,8 +259,12 @@ async function route(request, response) {
     const activity = code(params.get('activity'), 'Mã hoạt động', false);
     const sort = params.get('sort') || 'NGAY_GIAM';
     if (!sortOptions.has(sort)) throw new InputError('Kiểu sắp xếp không hợp lệ.');
+    const keyword = string(params.get('q'), 'Từ khóa', 255, { required: false });
+    // Thủ tục 2.3 dùng LIKE nên % và _ là ký tự đại diện; thoát chúng để từ khóa được tìm đúng như đã gõ.
+    const likeKeyword = keyword?.replace(/[\\%_]/g, '\\$&') ?? null;
+    if (likeKeyword && likeKeyword.length > 255) throw new InputError('Từ khóa chứa quá nhiều ký tự đặc biệt.');
     const result = await call('CALL sp_P2_DanhSachKhoanChi(?, ?, ?, ?, ?, ?)', [
-      campaign, activity, ...period(params), string(params.get('q'), 'Từ khóa', 255, { required: false }), sort,
+      campaign, activity, ...period(params), likeKeyword, sort,
     ]);
     return send(response, 200, { rows: result });
   }
@@ -275,7 +303,8 @@ async function route(request, response) {
   return send(response, 404, { error: 'Không tìm thấy trang hoặc tác vụ.' });
 }
 
-const server = createServer(async (request, response) => {
+// Node chỉ kiểm tra kết nối chậm mỗi 30 giây theo mặc định; rút ngắn để hai mốc timeout bên dưới có tác dụng.
+const server = createServer({ connectionsCheckingInterval: 2_000 }, async (request, response) => {
   response.setHeader('Cache-Control','no-store');
   response.setHeader('X-Content-Type-Options','nosniff');
   response.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
@@ -302,6 +331,9 @@ const server = createServer(async (request, response) => {
 });
 
 await rows('SELECT 1');
+// Yêu cầu chậm không được giữ kết nối lâu: mặc định của Node là 5 phút cho cả yêu cầu.
+server.headersTimeout = 10_000;
+server.requestTimeout = 15_000;
 const port = Number(config.PORT ?? 8080);
 server.listen(port, '127.0.0.1', () => console.log(`Marketing demo: http://127.0.0.1:${port}`));
 for (const signal of ['SIGINT','SIGTERM']) {

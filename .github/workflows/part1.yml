@@ -52,3 +52,5 @@ jobs:
           python3 database/tests/test_constraints.py --mysql mysql --host 127.0.0.1 --port 33077 --user root
           python3 database/tests/test_expense_integration.py --mysql mysql --host 127.0.0.1 --port 33077 --user root
           python3 database/tests/test_marketing_functions.py --mysql mysql --host 127.0.0.1 --port 33077 --user root
+      - name: Install part 3 web role
+        run: mysql --default-character-set=utf8mb4 --protocol=TCP -h 127.0.0.1 -P 33077 -u root < database/part3/01_app_role.sql

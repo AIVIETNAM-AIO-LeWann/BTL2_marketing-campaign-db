@@ -27,6 +27,9 @@ database/
     04_marketing_functions.sql # 2.4: đếm vượt ngân sách và tính CPA
   tests/test_expense_integration.py # kiểm tra ghép CRUD/truy vấn/trigger
   tests/test_marketing_functions.py # kiểm thử hai function
+  part3/
+    01_app_role.sql           # role marketing_web: quyền tối thiểu cho web
+app/                           # phần 3: web Node.js (server.mjs, public/)
 scripts/
   bootstrap.sh              # dựng CSDL bằng một phiên client qua Bash
   mysql-docker.sh           # dùng client trong container nếu không có client native

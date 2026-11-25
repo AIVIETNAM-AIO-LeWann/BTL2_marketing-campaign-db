@@ -10,7 +10,7 @@ try { paused = localStorage.getItem(preferenceKey) === 'paused'; } catch { /* In
 
 function scheduleGlow() {
   glowTimer = setTimeout(() => {
-    const bars = [...document.querySelectorAll('.art-bars i, .chart-meter, .ranked-bars meter')]
+    const bars = [...document.querySelectorAll('.art-bars i, .chart-bar-fill, .ranked-bar-fill')]
       .filter(bar => bar.getBoundingClientRect().height > 0 && !bar.closest('[aria-busy="true"]'));
     const choices = bars.length > 1 ? bars.filter(bar => bar !== lastBar) : bars;
     litBar = choices[Math.floor(Math.random() * choices.length)];
@@ -18,11 +18,11 @@ function scheduleGlow() {
     lastBar = litBar;
     litBar.dataset.glow = '';
     glowTimer = setTimeout(() => {
-      delete litBar.dataset.glow;
+      if (litBar) delete litBar.dataset.glow;
       litBar = undefined;
       scheduleGlow();
-    }, 1300);
-  }, 4500 + Math.random() * 4500);
+    }, 1400);
+  }, 3200 + Math.random() * 3400);
 }
 
 function update() {

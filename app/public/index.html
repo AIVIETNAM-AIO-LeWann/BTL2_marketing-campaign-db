@@ -10,53 +10,164 @@
   <script type="module" src="/app.js"></script>
 </head>
 <body class="dashboard-page">
-  <div class="ambient" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="ambient" aria-hidden="true">
+    <span class="ambient-orb orb-1"></span>
+    <span class="ambient-orb orb-2"></span>
+    <span class="ambient-orb orb-3"></span>
+    <span class="ambient-orb orb-4"></span>
+  </div>
+  <div class="dashboard-grid-bg" aria-hidden="true"></div>
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
-  <header class="topbar" id="workspace-sidebar">
-    <a class="brand" href="/" aria-label="Campaign Desk"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><span class="brand-label"><strong>Campaign Desk</strong><small>Marketing đa kênh</small></span></a>
+  <header class="topbar" id="workspace-sidebar" data-spotlight>
+    <span class="dock-sheen" aria-hidden="true"></span>
+    <a class="brand" href="/" aria-label="Campaign Desk">
+      <span class="brand-icon" data-magnetic="3"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span>
+      <span class="brand-label"><strong>Campaign Desk</strong><small><span class="live-dot" aria-hidden="true"></span>Marketing đa kênh</small></span>
+    </a>
     <nav aria-label="Điều hướng chính">
       <a href="#khoan-chi" data-page="khoan-chi" aria-label="Khoản chi" title="Khoản chi" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg><span class="nav-label">Khoản chi</span></a>
       <a href="#bao-cao" data-page="bao-cao" aria-label="Báo cáo" title="Báo cáo"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg><span class="nav-label">Báo cáo</span></a>
     </nav>
+
+    <div class="rail-status" id="rail-status">
+      <div class="rail-status-head"><span class="live-dot"></span><span>Không gian làm việc</span></div>
+      <div class="rail-status-metrics">
+        <div><small>Chiến dịch</small><b id="rail-campaigns">—</b></div>
+        <div><small>Hoạt động</small><b id="rail-activities">—</b></div>
+      </div>
+      <button type="button" class="rail-shortcut" id="rail-palette-btn">
+        <svg><use href="/icons.svg#sparkles"/></svg>
+        <span>Lệnh nhanh</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+    </div>
+
     <div class="rail-footer">
       <div class="operator" id="operator-badge"><span class="avatar" aria-hidden="true"><svg><use href="/icons.svg#user-round"/></svg></span><span class="operator-label"><strong id="operator">…</strong><small>Nhân viên</small></span></div>
       <div class="rail-actions">
-        <button class="rail-button mobile-motion" type="button" data-ambient-toggle aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
-        <button id="theme-toggle" class="rail-button" type="button" aria-label="Giao diện tối" aria-pressed="false" title="Bật giao diện tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
-        <button id="logout" class="rail-button" type="button" aria-label="Đăng xuất" title="Đăng xuất"><svg aria-hidden="true"><use href="/icons.svg#log-out"/></svg></button>
+        <button class="rail-button mobile-motion" type="button" data-ambient-toggle data-magnetic="2.5" aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
+        <button id="theme-toggle" class="rail-button" type="button" data-magnetic="2.5" aria-label="Giao diện tối" aria-pressed="false" title="Bật giao diện tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
+        <button id="logout" class="rail-button" type="button" data-magnetic="2.5" aria-label="Đăng xuất" title="Đăng xuất"><svg aria-hidden="true"><use href="/icons.svg#log-out"/></svg></button>
       </div>
     </div>
   </header>
   <main id="main-content" tabindex="-1">
-    <div class="context-bar"><button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Thu gọn thanh điều hướng" title="Thu gọn thanh điều hướng"><svg aria-hidden="true"><use href="/icons.svg#panel-left-close"/></svg></button><span>Chiến dịch marketing</span><svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg><strong id="current-page">Khoản chi</strong>
-      <button class="icon-button desktop-motion" type="button" data-ambient-toggle aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
+    <div class="context-bar" data-spotlight>
+      <button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" data-magnetic="2.5" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Thu gọn thanh điều hướng" title="Thu gọn thanh điều hướng (Ctrl+B)"><svg aria-hidden="true"><use href="/icons.svg#panel-left-close"/></svg></button>
+      <div class="campaign-switcher" id="campaign-switcher">
+        <label class="campaign-pill sr-only"><span class="sr-only">Chiến dịch đang xem</span><select id="campaign-switch"><option value="">Tất cả chiến dịch</option></select></label>
+        <button type="button" class="switcher-trigger" id="switcher-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="switcher-menu">
+          <span class="switcher-dot" aria-hidden="true"></span>
+          <span class="switcher-label" id="switcher-label">Tất cả chiến dịch</span>
+          <svg class="switcher-chevron" aria-hidden="true"><use href="/icons.svg#chevrons-up-down"/></svg>
+        </button>
+        <div class="switcher-menu" id="switcher-menu" role="listbox" aria-label="Chọn chiến dịch" hidden></div>
+      </div>
+      <svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg>
+      <span class="breadcrumb-stage"><strong id="current-page">Khoản chi</strong></span>
+      <button class="palette-trigger" id="palette-open" type="button" aria-label="Mở bảng lệnh nhanh" aria-keyshortcuts="Control+K Meta+K"><svg aria-hidden="true"><use href="/icons.svg#search"/></svg><span>Tìm trang, chiến dịch, lệnh…</span><kbd>Ctrl K</kbd></button>
+      <div class="accent-picker" id="accent-picker" role="group" aria-label="Chọn tông màu">
+        <button type="button" class="accent-dot" data-swatch="amber" aria-pressed="true" aria-label="Tông Xám Băng Hổ Phách" title="Xám Băng · Cam Hổ Phách"></button>
+        <button type="button" class="accent-dot" data-swatch="emerald" aria-pressed="false" aria-label="Tông Xanh Rừng Sylva" title="Xanh Rừng · Xanh Chanh"></button>
+        <button type="button" class="accent-dot" data-swatch="amethyst" aria-pressed="false" aria-label="Tông Tím Đêm Champagne" title="Tím Đêm · Vàng Champagne"></button>
+        <button type="button" class="accent-dot" data-swatch="sapphire" aria-pressed="false" aria-label="Tông Sapphire Lam Ngọc" title="Sapphire Đêm · Lam Ngọc"></button>
+      </div>
+      <button class="icon-button desktop-motion" type="button" data-ambient-toggle data-magnetic="2.5" aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
     </div>
-    <div class="workspace">
-    <div id="notice" class="notice" role="status" hidden></div>
+    <div class="workspace" id="workspace">
+    <div id="notice" class="notice-region" aria-live="polite"></div>
     <section id="khoan-chi" aria-labelledby="expense-title">
       <div class="page-head">
-        <div><h1 id="expense-title" tabindex="-1">Quản lý khoản chi</h1><p class="intro">Theo dõi chi phí và chứng từ theo từng chiến dịch.</p></div>
-        <button class="primary" id="open-create" type="button" disabled><svg aria-hidden="true"><use href="/icons.svg#plus"/></svg> Thêm khoản chi</button>
+        <div>
+          <span class="page-kicker"><svg aria-hidden="true"><use href="/icons.svg#sparkles"/></svg> Trung tâm điều hành chi phí</span>
+          <h1 id="expense-title" tabindex="-1">Quản lý khoản chi</h1>
+          <p class="intro">Theo dõi chi phí và chứng từ theo chiến dịch. Chọn một dòng để xem chi tiết.</p>
+        </div>
+        <button class="primary" id="open-create" type="button" data-magnetic="4" data-beam disabled><svg aria-hidden="true"><use href="/icons.svg#plus"/></svg> Thêm khoản chi</button>
       </div>
-      <div class="expense-summary" aria-label="Tổng quan theo bộ lọc">
-        <div class="stat spend-stat">
-          <div class="stat-copy">
+      <div class="expense-summary" role="group" aria-label="Tổng quan theo bộ lọc">
+        <div class="stat spend-stat" data-spotlight data-tilt="1.3" data-beam>
+          <span class="card-crown" aria-hidden="true"></span>
+          <div class="spend-top-bar">
             <span class="stat-label"><svg aria-hidden="true"><use href="/icons.svg#wallet"/></svg> Tổng chi theo bộ lọc</span>
-            <strong id="list-amount">—</strong>
-            <small id="list-period"></small>
+            <span class="period-chip" id="list-period-wrap"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg><small id="list-period"></small></span>
           </div>
-          <figure class="spend-chart" id="spend-chart" hidden>
-            <figcaption>Chi theo ngày</figcaption>
-            <div class="chart-bars" id="chart-bars" role="list"></div>
-          </figure>
+
+          <div class="spend-main">
+            <div class="stat-copy">
+              <strong id="list-amount">—</strong>
+              <div class="alloc-wrap" id="alloc-wrap" hidden>
+                <div class="alloc-bar" id="alloc-bar" aria-hidden="true"></div>
+                <div class="alloc-legend" id="alloc-legend"></div>
+              </div>
+            </div>
+            <figure class="spend-chart" id="spend-chart" hidden>
+              <div class="chart-head">
+                <figcaption>Chi theo ngày</figcaption>
+                <div class="chart-mode-toggle" id="chart-mode-toggle" role="group" aria-label="Kiểu biểu đồ">
+                  <span class="mode-slider" aria-hidden="true"></span>
+                  <button type="button" data-chart-mode="bar" aria-pressed="true" title="Biểu đồ cột"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg></button>
+                  <button type="button" data-chart-mode="spline" aria-pressed="false" title="Đường xu hướng"><svg aria-hidden="true"><use href="/icons.svg#chart-spline"/></svg></button>
+                </div>
+              </div>
+              <div class="chart-bars" id="chart-bars" role="list"></div>
+              <div class="chart-spline-wrap" id="chart-spline" hidden></div>
+            </figure>
+          </div>
+
+          <div class="hero-pills" id="hero-pills" hidden>
+            <div class="hero-metric"><small>Trung bình / khoản</small><b id="list-avg">—</b></div>
+            <div class="hero-metric"><small>Đỉnh chi theo ngày</small><b id="list-peak">—</b></div>
+            <div class="hero-metric"><small>Tỷ trọng khoản lớn nhất</small><b id="list-top-share">—</b></div>
+          </div>
         </div>
+
         <div class="expense-kpis">
-          <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span><span class="stat-label">Số khoản chi</span><strong id="list-count">—</strong></div>
-          <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg></span><span class="stat-label">Hoạt động có khoản chi</span><strong id="list-activities">—</strong></div>
+          <div class="kpi-pair">
+            <div class="stat secondary-stat kpi-tile" data-spotlight data-tilt="2.0">
+              <div class="kpi-tile-head">
+                <span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span>
+                <span class="kpi-tag">Bản ghi</span>
+              </div>
+              <strong id="list-count">—</strong>
+              <span class="stat-label">Số khoản chi</span>
+            </div>
+            <div class="stat secondary-stat kpi-tile" data-spotlight data-tilt="2.0">
+              <div class="kpi-tile-head">
+                <span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg></span>
+                <span class="kpi-tag">Phạm vi</span>
+              </div>
+              <strong id="list-activities">—</strong>
+              <span class="stat-label">Hoạt động có chi</span>
+            </div>
+          </div>
+          <div class="stat focus-stat" id="focus-card" data-spotlight data-tilt="1.8" data-beam hidden>
+            <span class="card-crown" aria-hidden="true"></span>
+            <div class="focus-top">
+              <span class="eyebrow"><svg aria-hidden="true"><use href="/icons.svg#sparkles"/></svg> Khoản chi lớn nhất</span>
+              <span class="focus-code" id="focus-code">—</span>
+            </div>
+            <strong id="focus-amount">—</strong>
+            <small id="focus-text"></small>
+            <button class="accent" id="focus-open" type="button" data-magnetic="3"><span>Soi chi tiết khoản này</span><svg aria-hidden="true"><use href="/icons.svg#arrow-up-right"/></svg></button>
+          </div>
         </div>
       </div>
-      <div class="panel expense-panel">
-        <div class="table-head"><h2>Danh sách khoản chi</h2><span id="table-count" class="count" aria-live="polite"></span></div>
+      <div class="panel expense-panel" data-spotlight>
+        <div class="table-head">
+          <div class="table-head-left">
+            <h2>Danh sách khoản chi</h2>
+            <span id="table-count" class="count" aria-live="polite"></span>
+          </div>
+          <div class="quick-sort" id="quick-sort" role="group" aria-label="Sắp xếp nhanh">
+            <span class="seg-pill" aria-hidden="true"></span>
+            <button type="button" data-sort="NGAY_GIAM" aria-pressed="true">Mới nhất</button>
+            <button type="button" data-sort="TIEN_GIAM" aria-pressed="false">Cao nhất</button>
+            <button type="button" data-sort="TIEN_TANG" aria-pressed="false">Thấp nhất</button>
+            <button type="button" data-sort="NGAY_TANG" aria-pressed="false">Cũ nhất</button>
+          </div>
+        </div>
         <form id="expense-filters" class="filter-form">
           <label class="search-field">Tìm khoản chi<span class="input-icon"><svg aria-hidden="true"><use href="/icons.svg#search"/></svg><input name="q" type="search" maxlength="255" placeholder="Nội dung hoặc mã chứng từ"></span></label>
           <label>Chiến dịch<select name="campaign" id="list-campaign"><option value="">Tất cả chiến dịch</option></select></label>
@@ -64,9 +175,10 @@
           <label>Từ ngày<input name="from" type="date" required></label>
           <label>Đến ngày<input name="to" type="date" required></label>
           <label>Sắp xếp<select name="sort"><option value="NGAY_GIAM">Mới nhất</option><option value="NGAY_TANG">Cũ nhất</option><option value="TIEN_GIAM">Chi phí cao nhất</option><option value="TIEN_TANG">Chi phí thấp nhất</option></select></label>
-          <div class="filter-actions"><button class="ghost" type="reset">Đặt lại</button><button class="secondary" type="submit"><svg aria-hidden="true"><use href="/icons.svg#list-filter"/></svg> Lọc dữ liệu</button></div>
+          <div class="filter-actions"><button class="ghost" type="reset">Đặt lại</button><button class="secondary" type="submit" data-magnetic="2.5"><svg aria-hidden="true"><use href="/icons.svg#list-filter"/></svg> Lọc dữ liệu</button></div>
         </form>
-        <div id="expense-results" class="table-scroll" tabindex="0" aria-label="Bảng khoản chi" aria-busy="true">
+        <div id="active-chips" class="active-chips" aria-label="Bộ lọc đang áp dụng" hidden></div>
+        <div id="expense-results" class="table-scroll" tabindex="0" role="region" aria-label="Bảng khoản chi" aria-busy="true">
           <table role="table"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Khoản chi</th><th scope="col" role="columnheader">Hoạt động</th><th scope="col" role="columnheader">Ngày phát sinh</th><th scope="col" role="columnheader" class="number">Số tiền</th><th scope="col" role="columnheader">Người ghi</th><th scope="col" role="columnheader" class="right">Thao tác</th></tr></thead><tbody id="expense-rows" role="rowgroup"></tbody></table>
         </div>
         <div id="expense-state" class="empty-state"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span><p id="expense-empty" class="message" role="status">Đang tải khoản chi…</p></div>
@@ -74,38 +186,121 @@
     </section>
 
     <section id="bao-cao" aria-labelledby="report-title" hidden>
-      <div class="page-head"><div><h1 id="report-title" tabindex="-1">Báo cáo chi phí</h1><p class="intro">So sánh thực chi giữa các hoạt động và theo dõi chi phí chuyển đổi.</p></div></div>
-      <form id="report-filters" class="panel report-filter">
+      <div class="page-head">
+        <div>
+          <span class="page-kicker"><svg aria-hidden="true"><use href="/icons.svg#trending-up"/></svg> Phân tích hiệu quả chiến dịch</span>
+          <h1 id="report-title" tabindex="-1">Báo cáo chi phí</h1>
+          <p class="intro">So sánh thực chi giữa các hoạt động và theo dõi chi phí chuyển đổi.</p>
+        </div>
+      </div>
+      <form id="report-filters" class="panel report-filter" data-spotlight>
         <label>Chiến dịch<select name="campaign" id="report-campaign" required></select></label>
         <label>Hoạt động tính CPA<select name="activity" id="report-activity"></select></label>
         <label>Từ ngày<input name="from" type="date" required></label>
         <label>Đến ngày<input name="to" type="date" required></label>
         <label>Tổng chi tối thiểu (VND)<input name="min" value="0" inputmode="numeric" pattern="[0-9]+" maxlength="38" required></label>
-        <button class="primary" type="submit"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg> Xem báo cáo</button>
+        <button class="primary" type="submit" data-magnetic="3.5" data-beam><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg> Xem báo cáo</button>
       </form>
       <div class="report-overview" id="report-overview" aria-busy="true">
-        <section class="panel ranked-spend" aria-labelledby="ranked-title">
+        <section class="panel ranked-spend" aria-labelledby="ranked-title" data-spotlight>
+          <span class="card-crown" aria-hidden="true"></span>
           <div class="ranked-head">
             <div><h2 id="ranked-title">Thực chi trong kỳ</h2><p id="ranked-scope">Theo các hoạt động đạt ngưỡng lọc</p></div>
             <strong id="report-total">—</strong>
           </div>
-          <ul class="ranked-bars" id="ranked-bars"></ul>
+          <div class="ranked-body">
+            <div class="donut-stage" id="donut-stage" hidden>
+              <svg id="report-donut" class="report-donut" viewBox="0 0 180 180" aria-hidden="true"></svg>
+              <div class="donut-center">
+                <strong id="donut-value">—</strong>
+                <small id="donut-label">Top hoạt động</small>
+              </div>
+            </div>
+            <ul class="ranked-bars" id="ranked-bars"></ul>
+          </div>
           <p id="ranked-note" class="ranked-note" role="status">Đang tải thực chi…</p>
         </section>
         <div class="stats report-stats">
-          <div class="stat spend-stat"><div class="stat-copy"><span class="stat-label"><svg aria-hidden="true"><use href="/icons.svg#wallet"/></svg> Hoạt động vượt ngân sách</span><strong id="report-overspent">—</strong><small>Tính toàn bộ thực chi của chiến dịch</small></div></div>
-          <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#target"/></svg></span><span class="stat-label">Chi phí trên một chuyển đổi</span><strong id="report-cpa">—</strong><small id="cpa-note">CPA của hoạt động trong kỳ</small></div>
+          <div class="stat spend-stat overspent-card" id="overspent-card" data-spotlight data-tilt="1.8" data-beam>
+            <span class="card-crown" aria-hidden="true"></span>
+            <div class="overspent-body">
+              <div class="stat-copy">
+                <span class="stat-label"><svg aria-hidden="true"><use href="/icons.svg#wallet"/></svg> Hoạt động vượt ngân sách</span>
+                <div class="overspent-row">
+                  <strong id="report-overspent">—</strong>
+                  <span class="overspent-badge" id="overspent-badge">Đang kiểm tra</span>
+                </div>
+                <small>Tính toàn bộ thực chi của chiến dịch</small>
+              </div>
+              <div class="overspent-gauge" aria-hidden="true">
+                <svg viewBox="0 0 92 92">
+                  <circle class="gauge-track" cx="46" cy="46" r="36" />
+                  <circle class="gauge-arc" id="overspent-arc" cx="46" cy="46" r="36" />
+                </svg>
+                <span id="overspent-ratio">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat secondary-stat cpa-card" data-spotlight data-tilt="1.8">
+            <div class="cpa-head">
+              <span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#target"/></svg></span>
+              <div class="cpa-head-copy">
+                <span class="stat-label">Chi phí trên một chuyển đổi (CPA)</span>
+                <small id="cpa-activity-pill" class="cpa-activity-pill">—</small>
+              </div>
+            </div>
+            <strong id="report-cpa" class="cpa-value">—</strong>
+            <small id="cpa-note">CPA của hoạt động trong kỳ</small>
+          </div>
         </div>
       </div>
-      <div class="panel report-panel" id="report-results" aria-busy="true">
+      <div class="panel report-panel" id="report-results" aria-busy="true" data-spotlight>
         <div class="table-head"><h2>Tổng chi theo hoạt động</h2><span id="report-count" class="count" aria-live="polite"></span></div>
-        <div class="table-scroll" tabindex="0" aria-label="Bảng tổng chi theo hoạt động"><table role="table"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Hoạt động</th><th scope="col" role="columnheader">Chiến dịch</th><th scope="col" role="columnheader" class="number">Số khoản chi</th><th scope="col" role="columnheader" class="number">Tổng chi trong kỳ</th></tr></thead><tbody id="report-rows" role="rowgroup"></tbody></table></div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Bảng tổng chi theo hoạt động"><table role="table"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Hoạt động</th><th scope="col" role="columnheader">Chiến dịch</th><th scope="col" role="columnheader" class="number">Số khoản chi</th><th scope="col" role="columnheader" class="number">Tổng chi trong kỳ</th></tr></thead><tbody id="report-rows" role="rowgroup"></tbody></table></div>
         <div id="report-state" class="empty-state"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg></span><p id="report-empty" class="message" role="status">Chọn chiến dịch và khoảng ngày để xem báo cáo.</p></div>
       </div>
     </section>
     </div>
   </main>
-  <dialog id="expense-dialog" aria-labelledby="dialog-title">
+
+  <!-- Quick Inspect Slide-Over Frosted Glass Drawer -->
+  <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+  <aside id="detail-drawer" class="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" data-spotlight hidden>
+    <div class="drawer-head">
+      <div class="drawer-badges">
+        <span class="drawer-code" id="drawer-code">—</span>
+        <span class="badge" id="drawer-status">Chỉ xem</span>
+      </div>
+      <button type="button" class="icon-button" id="drawer-close" aria-label="Đóng chi tiết"><svg aria-hidden="true"><use href="/icons.svg#x"/></svg></button>
+    </div>
+    <div class="drawer-hero" data-beam>
+      <span class="drawer-eyebrow">Giá trị khoản chi</span>
+      <strong id="drawer-amount">—</strong>
+      <div class="drawer-share-wrap">
+        <div class="drawer-share-meta"><span>Tỷ trọng trong kỳ đang lọc</span><b id="drawer-share-pct">0%</b></div>
+        <div class="drawer-share-track"><span class="drawer-share-fill" id="drawer-share-fill"></span></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <h2 id="drawer-title" class="drawer-title">—</h2>
+      <dl class="drawer-meta-grid">
+        <div><dt><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg> Hoạt động</dt><dd id="drawer-activity">—</dd></div>
+        <div><dt><svg aria-hidden="true"><use href="/icons.svg#trending-up"/></svg> Chiến dịch</dt><dd id="drawer-campaign">—</dd></div>
+        <div><dt><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg> Ngày phát sinh</dt><dd id="drawer-date">—</dd></div>
+        <div><dt><svg aria-hidden="true"><use href="/icons.svg#hash"/></svg> Mã chứng từ</dt><dd id="drawer-receipt">—</dd></div>
+        <div><dt><svg aria-hidden="true"><use href="/icons.svg#user-round"/></svg> Người ghi nhận</dt><dd id="drawer-actor">—</dd></div>
+      </dl>
+    </div>
+    <div class="drawer-actions">
+      <button type="button" class="secondary" id="drawer-copy" data-magnetic="2.5"><svg aria-hidden="true"><use href="/icons.svg#copy"/></svg> <span>Sao chép mã</span></button>
+      <button type="button" class="secondary" id="drawer-filter-activity" data-magnetic="2.5"><svg aria-hidden="true"><use href="/icons.svg#sliders"/></svg> <span>Lọc hoạt động này</span></button>
+      <button type="button" class="primary" id="drawer-edit" data-magnetic="3" hidden><svg aria-hidden="true"><use href="/icons.svg#pencil"/></svg> <span>Chỉnh sửa</span></button>
+      <button type="button" class="danger" id="drawer-delete" data-magnetic="3" hidden><svg aria-hidden="true"><use href="/icons.svg#trash-2"/></svg> <span>Xóa khoản chi</span></button>
+    </div>
+  </aside>
+
+  <dialog id="expense-dialog" aria-labelledby="dialog-title" data-spotlight>
     <form id="expense-editor">
       <div class="dialog-head"><h2 id="dialog-title">Thêm khoản chi</h2><button type="button" class="icon-button" data-close="expense-dialog" aria-label="Đóng"><svg aria-hidden="true"><use href="/icons.svg#x"/></svg></button></div>
       <div class="form-fields">
@@ -114,17 +309,17 @@
         <label>Ngày phát sinh<input name="date" type="date" required></label>
         <label>Số tiền (VND)<input name="amount" inputmode="numeric" pattern="[0-9]+" maxlength="18" placeholder="500000" required></label>
         <label class="full">Nội dung chi<textarea name="description" required maxlength="500" rows="3" placeholder="Nội dung phục vụ hoạt động"></textarea></label>
-        <label class="full">Mã chứng từ <span class="optional">(không bắt buộc)</span><input name="receipt" maxlength="100" placeholder="Ví dụ CT-DEMO"></label>
+        <label class="full"><span>Mã chứng từ <span class="optional">(không bắt buộc)</span></span><input name="receipt" maxlength="100" placeholder="Ví dụ CT-DEMO"></label>
       </div>
       <p id="editor-error" class="form-error" role="alert" hidden></p>
-      <div class="dialog-actions"><button type="button" class="secondary" data-close="expense-dialog">Hủy</button><button type="submit" class="primary">Lưu khoản chi</button></div>
+      <div class="dialog-actions"><button type="button" class="secondary" data-close="expense-dialog">Hủy</button><button type="submit" class="primary" data-magnetic="3">Lưu khoản chi</button></div>
     </form>
   </dialog>
-  <dialog id="delete-dialog" aria-labelledby="delete-title">
+  <dialog id="delete-dialog" aria-labelledby="delete-title" data-spotlight>
     <form id="delete-form">
       <div class="dialog-head"><h2 id="delete-title">Xóa khoản chi</h2><button type="button" class="icon-button" data-close="delete-dialog" aria-label="Đóng"><svg aria-hidden="true"><use href="/icons.svg#x"/></svg></button></div>
       <p id="delete-detail"></p><p id="delete-error" class="form-error" role="alert" hidden></p>
-      <div class="dialog-actions"><button type="button" class="secondary" data-close="delete-dialog" autofocus>Giữ lại</button><button type="submit" class="danger">Xóa khoản chi</button></div>
+      <div class="dialog-actions"><button type="button" class="secondary" data-close="delete-dialog" autofocus>Giữ lại</button><button type="submit" class="danger" data-magnetic="3">Xóa khoản chi</button></div>
     </form>
   </dialog>
 </body>
