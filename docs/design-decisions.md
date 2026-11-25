@@ -11,6 +11,3 @@
 9. **Thuộc tính dẫn xuất**: thời lượng tính qua view. Phần 2.2 thêm cột TongChiPhiThucTe và trigger đồng bộ khi thêm/sửa/xóa/chuyển khoản chi; view tổng chi vẫn được giữ để đối soát độc lập.
 10. **Phân quyền**: role `marketing_p1` có quyền đọc, gọi các workflow tạo dữ liệu và hai function 2.4. Web dùng role `marketing_web` với quyền đọc dữ liệu cần thiết và gọi routine phần 2. Biến phiên trong workflow chỉ phục vụ kiểm tra toàn vẹn, còn quyền ghi của web được kiểm soát qua procedure.
 
-## Đầu việc tiếp theo (chưa hiện thực)
-
-- Phân công sao cho cả bốn thành viên có đóng góp SQL phần 2 và hiểu các workflow/ràng buộc nền tảng.

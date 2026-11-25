@@ -1,4 +1,5 @@
 import './ambient.js';
+import './validity-vi.js';
 
 const $ = (id) => document.getElementById(id);
 const filters = $('expense-filters');
@@ -58,21 +59,42 @@ function setupAppearance() {
 }
 
 async function api(path, { signal, method = 'GET', data } = {}) {
-  const response = await fetch(path, {
-    method, signal,
-    ...(data && { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
-  });
+  let response;
+  try {
+    response = await fetch(path, {
+      method, signal,
+      ...(data && { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('Chưa kết nối được với máy chủ. Hãy kiểm tra kết nối rồi thử lại.');
+  }
   if (response.status === 401) window.location.replace('/login');
-  const payload = await response.json();
+  const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error ?? 'Yêu cầu không thành công.');
   return payload;
 }
 
+let noticeTimer;
 function banner(message, isError = false) {
-  const node = $('notice');
-  node.hidden = !message;
-  node.textContent = message ?? '';
-  node.classList.toggle('error', isError);
+  const region = $('notice');
+  clearTimeout(noticeTimer);
+  region.replaceChildren();
+  if (!message) return;
+  region.setAttribute('aria-live', isError ? 'assertive' : 'polite');
+  const node = document.createElement('div');
+  node.className = isError ? 'notice error' : 'notice';
+  const text = document.createElement('span');
+  text.textContent = message;
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'notice-close';
+  close.setAttribute('aria-label', 'Đóng thông báo');
+  close.textContent = '×';
+  close.addEventListener('click', () => banner());
+  node.append(text, close);
+  region.append(node);
+  if (!isError) noticeTimer = setTimeout(() => banner(), 7000);
 }
 
 function fieldError(id, message) {
@@ -255,6 +277,7 @@ async function loadExpenses() {
   } catch (error) {
     if (error.name !== 'AbortError' && expenseRequest === request) {
       banner(error.message, true);
+      renderExpenses([], params);
       $('expense-empty').textContent = 'Chưa tải được khoản chi. Hãy thử lọc lại.';
     }
   } finally {

@@ -1,4 +1,5 @@
 import './ambient.js';
+import './validity-vi.js';
 
 const form = document.getElementById('login-form');
 const password = document.getElementById('password');

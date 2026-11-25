@@ -45,7 +45,7 @@
 .login-brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 680; font-size: 1.075rem; letter-spacing: -.03em; }
 .login-intro-copy { position: relative; z-index: 1; margin-top: auto; }
 .login-product { margin: 0 0 8px; color: #c2e5b2; font-size: .875rem; font-weight: 610; }
-.login-intro h2 { max-width: 410px; font-size: clamp(2.13rem, 4.2vw, 3.6rem); line-height: 1.07; letter-spacing: -.055em; text-wrap: balance; }
+.login-intro .login-headline { max-width: 410px; font-size: clamp(2.13rem, 4.2vw, 3.6rem); line-height: 1.07; letter-spacing: -.055em; text-wrap: balance; }
 .login-intro-copy > :last-child { max-width: 350px; margin: 15px 0 0; color: #cfe4d7; font-size: .945rem; }
 
 .login-art { min-height: 235px; flex: 1 0 auto; position: relative; display: grid; place-items: center; margin-block: 10px; }

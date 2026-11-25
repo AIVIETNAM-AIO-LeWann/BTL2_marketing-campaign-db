@@ -259,7 +259,8 @@ td.number { font-weight: 660; }
 tbody tr:hover { background: var(--table-hover); }
 .empty-state { display: grid; justify-items: center; gap: 8px; padding: 30px 18px; color: var(--muted-foreground); text-align: center; }
 .message { margin: 0; }
-.notice { position: fixed; z-index: 3; inset: auto 22px 20px auto; max-width: min(440px, calc(100vw - 26px)); padding: 11px 15px; border-radius: 10px; border: 1px solid #b1d8bc; background: #e7f4e7; color: #17482c; box-shadow: 0 9px 27px #172b2326; animation: notice-in .22s var(--ease-out) both; }
+.notice-region { position: fixed; z-index: 3; inset: auto 22px 20px auto; max-width: min(440px, calc(100vw - 26px)); display: grid; gap: 8px; }
+.notice { display: flex; align-items: flex-start; gap: 10px; padding: 11px 15px; border-radius: 10px; border: 1px solid #b1d8bc; background: #e7f4e7; color: #17482c; box-shadow: 0 9px 27px #172b2326; animation: notice-in .22s var(--ease-out) both; }
 @keyframes notice-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .notice.error, .form-error { border: 1px solid #ecc4c6; background: #fff1f1; color: #852632; }
 
@@ -281,6 +282,10 @@ dialog::backdrop { background: #192e2294; backdrop-filter: blur(3px); }
 .form-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .full { grid-column: 1 / -1; }
 .optional { color: var(--muted-foreground); font-weight: 450; }
+.notice-close { flex: none; min-width: 26px; min-height: 26px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.notice-close:hover { background: #00000014; }
+html { scroll-padding-bottom: 96px; }
+@media (max-width: 480px) { .form-fields { grid-template-columns: minmax(0, 1fr); } }
 .dialog-actions { margin-top: 17px; display: flex; justify-content: end; gap: 8px; }
 .form-error { padding: 8px 11px; border-radius: 8px; margin-bottom: 0; }
 
@@ -351,7 +356,7 @@ dialog::backdrop { background: #192e2294; backdrop-filter: blur(3px); }
   .report-stats .stat { min-height: 142px; }
   .ranked-spend { padding: 13px; }
   .ranked-bars li { grid-template-columns: minmax(0,1fr) minmax(0, 44%); }
-  .notice { right: 13px; bottom: 13px; }
+  .notice-region { right: 13px; bottom: 13px; }
   .stat strong { font-size: 1.75rem; }
   .spend-stat strong { font-size: 1.95rem; }
   .spend-chart { flex-basis: 36%; min-width: 94px; }
