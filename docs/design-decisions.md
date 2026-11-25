@@ -9,9 +9,8 @@
 7. **Dữ liệu đo lường NULL khác 0**: thiếu dữ liệu không được biến thành kết quả bằng 0. Chỉ số tỷ lệ dùng tổng tử số/tổng mẫu số trong cùng phạm vi và trả NULL nếu không đủ điều kiện. Không lấy trung bình các tỷ lệ ngày.
 8. **Chính sách xóa**: các FK không CASCADE. Bản ghi đang dùng bị FK chặn; dữ liệu phân công/chi phí/kết quả thuộc đối tượng đã kết thúc được giữ lại. Ba procedure 2.1 chỉ cho người tạo sửa/xóa khoản chi còn mở; xóa nhằm xử lý nhập nhầm/trùng, không xóa chi phí đã khóa sổ.
 9. **Thuộc tính dẫn xuất**: thời lượng tính qua view. Phần 2.2 thêm cột TongChiPhiThucTe và trigger đồng bộ khi thêm/sửa/xóa/chuyển khoản chi; view tổng chi vẫn được giữ để đối soát độc lập.
-10. **Phân quyền**: role marketing_p1 có đọc, gọi các workflow tạo dữ liệu đầy đủ và hai function 2.4. Quyền gọi procedure CRUD/truy vấn cần cấp theo tài khoản ứng dụng khi làm phần 3. Không dùng root hoặc cấp raw DML cho ứng dụng; biến phiên trong workflow không thay thế quyền truy cập.
+10. **Phân quyền**: role `marketing_p1` có quyền đọc, gọi các workflow tạo dữ liệu và hai function 2.4. Web dùng role `marketing_web` với quyền đọc dữ liệu cần thiết và gọi routine phần 2. Biến phiên trong workflow chỉ phục vụ kiểm tra toàn vẹn, còn quyền ghi của web được kiểm soát qua procedure.
 
 ## Đầu việc tiếp theo (chưa hiện thực)
 
-- Ứng dụng web, kết nối MySQL bằng user giới hạn quyền, xử lý lỗi và giao diện.
 - Phân công sao cho cả bốn thành viên có đóng góp SQL phần 2 và hiểu các workflow/ràng buộc nền tảng.

@@ -1,6 +1,6 @@
 # BTL2 — Cơ sở dữ liệu quản lý chiến dịch marketing đa kênh
 
-Hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu (phần 1); trigger tổng chi phí, procedure CRUD/truy vấn khoản chi và hai function nghiệp vụ (phần 2). Ứng dụng web thuộc phần 3, chưa triển khai.
+Hiện thực 15 bảng MySQL, ràng buộc và dữ liệu mẫu (phần 1), trigger và routine quản lý khoản chi (phần 2), cùng web quản lý khoản chi và xem báo cáo (phần 3).
 
 ## Yêu cầu môi trường
 
@@ -146,6 +146,6 @@ python database/tests/test_marketing_functions.py --mysql mysql --host 127.0.0.1
 
 GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, rồi nạp phần 2 và kiểm tra cả phần ghép. Xem kết quả cụ thể của commit/PR. Các tài liệu kèm theo gồm [kết quả kiểm thử phần 1](docs/part1-test-results.md), [hướng dẫn demo trigger 2.2](docs/part2-triggers.md) và [hướng dẫn demo function 2.4](docs/part2-functions.md).
 
-## Phạm vi phần tiếp theo
+## Web quản lý khoản chi
 
-Phần 3 cần giao diện CRUD `KhoanChi` gọi ba procedure 2.1, danh sách/lọc/sắp xếp gọi procedure 2.3 và báo cáo gọi procedure hoặc function 2.4. Công nghệ web chưa chốt. Mỗi thành viên cần hiểu các routine và dữ liệu minh họa, kể cả nội dung mình không trực tiếp viết.
+Ứng dụng Node.js trong `app/` gọi trực tiếp các routine MySQL. Cách cấp quyền cho tài khoản web, cấu hình chạy, kịch bản trình bày và tùy chọn chia sẻ qua Cloudflare Tunnel có trong [hướng dẫn phần 3](docs/part3-web.md).

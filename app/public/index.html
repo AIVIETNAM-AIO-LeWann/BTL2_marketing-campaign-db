@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Quản lý và phân tích chi phí chiến dịch marketing đa kênh.">
+  <title>Campaign Desk · Khoản chi marketing</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Campaign Desk"><span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>Campaign Desk</a>
+    <nav aria-label="Điều hướng chính"><a href="#khoan-chi" data-page="khoan-chi" aria-current="page">Khoản chi</a><a href="#bao-cao" data-page="bao-cao">Báo cáo</a></nav>
+    <div class="operator"><span class="avatar" aria-hidden="true">NV</span><span>Nhân viên <strong id="operator">…</strong></span></div>
+  </header>
+  <main>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <section id="khoan-chi" aria-labelledby="expense-title">
+      <div class="page-head">
+        <div><p class="eyebrow">MARKETING ĐA KÊNH</p><h1 id="expense-title">Quản lý khoản chi</h1><p class="intro">Theo dõi chi phí và chứng từ theo từng chiến dịch.</p></div>
+        <button class="primary" id="open-create" type="button" disabled><span aria-hidden="true">＋</span> Thêm khoản chi</button>
+      </div>
+      <div class="stats" aria-label="Tổng quan theo bộ lọc">
+        <div class="stat"><span class="stat-label">Tổng chi theo bộ lọc</span><strong id="list-amount">—</strong></div>
+        <div class="stat"><span class="stat-label">Số khoản chi</span><strong id="list-count">—</strong></div>
+        <div class="stat"><span class="stat-label">Hoạt động có khoản chi</span><strong id="list-activities">—</strong></div>
+      </div>
+      <div class="panel">
+        <form id="expense-filters" class="filter-form">
+          <label class="search-field">Tìm khoản chi<input name="q" type="search" maxlength="255" placeholder="Nội dung hoặc mã chứng từ"></label>
+          <label>Chiến dịch<select name="campaign" id="list-campaign"><option value="">Tất cả chiến dịch</option></select></label>
+          <label>Hoạt động<select name="activity" id="list-activity"><option value="">Tất cả hoạt động</option></select></label>
+          <label>Từ ngày<input name="from" type="date" required></label>
+          <label>Đến ngày<input name="to" type="date" required></label>
+          <label>Sắp xếp<select name="sort"><option value="NGAY_GIAM">Mới nhất</option><option value="NGAY_TANG">Cũ nhất</option><option value="TIEN_GIAM">Chi phí cao nhất</option><option value="TIEN_TANG">Chi phí thấp nhất</option></select></label>
+          <div class="filter-actions"><button class="secondary" type="reset">Đặt lại</button><button class="primary" type="submit">Lọc dữ liệu</button></div>
+        </form>
+        <div class="table-head"><h2>Danh sách khoản chi</h2><span id="table-count" class="count" aria-live="polite"></span></div>
+        <div class="table-scroll" tabindex="0" aria-label="Bảng khoản chi">
+          <table><thead><tr><th scope="col">Khoản chi</th><th scope="col">Hoạt động</th><th scope="col">Ngày phát sinh</th><th scope="col" class="number">Số tiền</th><th scope="col">Người ghi</th><th scope="col" class="right">Thao tác</th></tr></thead><tbody id="expense-rows"></tbody></table>
+        </div>
+        <p id="expense-empty" class="message" role="status">Đang kết nối MySQL…</p>
+      </div>
+    </section>
+
+    <section id="bao-cao" aria-labelledby="report-title" hidden>
+      <div class="page-head"><div><p class="eyebrow">MARKETING ĐA KÊNH</p><h1 id="report-title">Báo cáo chi phí</h1><p class="intro">Tổng hợp chi theo hoạt động và theo dõi hiệu quả chuyển đổi.</p></div></div>
+      <form id="report-filters" class="panel report-filter">
+        <label>Chiến dịch<select name="campaign" id="report-campaign" required></select></label>
+        <label>Hoạt động tính CPA<select name="activity" id="report-activity"></select></label>
+        <label>Từ ngày<input name="from" type="date" required></label>
+        <label>Đến ngày<input name="to" type="date" required></label>
+        <label>Tổng chi tối thiểu (VND)<input name="min" value="0" inputmode="numeric" pattern="[0-9]+" maxlength="38" required></label>
+        <button class="primary" type="submit">Xem báo cáo</button>
+      </form>
+      <div class="stats report-stats">
+        <div class="stat"><span class="stat-label">Hoạt động vượt ngân sách</span><strong id="report-overspent">—</strong><small>Tính toàn bộ thực chi của chiến dịch</small></div>
+        <div class="stat"><span class="stat-label">Chi phí trên một chuyển đổi</span><strong id="report-cpa">—</strong><small id="cpa-note">CPA của hoạt động trong kỳ</small></div>
+      </div>
+      <div class="panel report-panel">
+        <div class="table-head"><h2>Tổng chi theo hoạt động</h2><span id="report-count" class="count" aria-live="polite"></span></div>
+        <div class="table-scroll" tabindex="0" aria-label="Bảng tổng chi theo hoạt động"><table><thead><tr><th scope="col">Hoạt động</th><th scope="col">Chiến dịch</th><th scope="col" class="number">Số khoản chi</th><th scope="col" class="number">Tổng chi trong kỳ</th></tr></thead><tbody id="report-rows"></tbody></table></div>
+        <p id="report-empty" class="message" role="status">Chọn chiến dịch và khoảng ngày để xem báo cáo.</p>
+      </div>
+    </section>
+  </main>
+  <dialog id="expense-dialog" aria-labelledby="dialog-title">
+    <form id="expense-editor">
+      <div class="dialog-head"><h2 id="dialog-title">Thêm khoản chi</h2><button type="button" class="icon-button" data-close="expense-dialog" aria-label="Đóng">×</button></div>
+      <div class="form-fields">
+        <label>Mã khoản chi<input name="id" maxlength="20" pattern="[A-Za-z0-9_\-]+" required placeholder="Ví dụ KC_DEMO"></label>
+        <label>Hoạt động<select name="activity" required></select></label>
+        <label>Ngày phát sinh<input name="date" type="date" required></label>
+        <label>Số tiền (VND)<input name="amount" inputmode="numeric" pattern="[0-9]+" maxlength="18" placeholder="500000" required></label>
+        <label class="full">Nội dung chi<textarea name="description" required maxlength="500" rows="3" placeholder="Nội dung phục vụ hoạt động"></textarea></label>
+        <label class="full">Mã chứng từ <span class="optional">(không bắt buộc)</span><input name="receipt" maxlength="100" placeholder="Ví dụ CT-DEMO"></label>
+      </div>
+      <p id="editor-error" class="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="secondary" data-close="expense-dialog">Hủy</button><button type="submit" class="primary">Lưu khoản chi</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <form id="delete-form">
+      <div class="dialog-head"><h2 id="delete-title">Xóa khoản chi</h2><button type="button" class="icon-button" data-close="delete-dialog" aria-label="Đóng">×</button></div>
+      <p id="delete-detail"></p><p id="delete-error" class="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="secondary" data-close="delete-dialog" autofocus>Giữ lại</button><button type="submit" class="danger">Xóa khoản chi</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
