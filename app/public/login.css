@@ -1,11 +1,11 @@
 .login-page {
-  --ambient-opacity: .85;
+  --ambient-opacity: .7;
+  --ambient-wash: radial-gradient(ellipse at 14% 26%, #afcfb7 0%, transparent 51%), radial-gradient(ellipse at 82% 66%, #c6ded1 0%, transparent 35%), radial-gradient(ellipse at 19% 100%, #e5cba6 0%, transparent 48%);
   min-height: 100svh;
-  background-image: radial-gradient(ellipse at 95% 8%, #c6decd80 0%, transparent 54%), var(--canvas);
 }
 .login-motion { position: fixed; z-index: 2; top: 13px; right: 15px; min-width: 42px; min-height: 42px; border: 1px solid var(--border); background: var(--glass); box-shadow: 0 3px 12px #142c2410; backdrop-filter: blur(10px); }
 [data-theme='dark'] .login-page {
-  background-image: radial-gradient(ellipse at 95% 8%, #40634a56 0%, transparent 54%), var(--canvas);
+  --ambient-wash: radial-gradient(ellipse at 14% 26%, #355e4b 0%, transparent 51%), radial-gradient(ellipse at 82% 66%, #2b4d3e 0%, transparent 35%), radial-gradient(ellipse at 19% 100%, #665440 0%, transparent 48%);
 }
 .login-layout {
   width: min(1180px, 100%);
@@ -29,8 +29,8 @@
   border: 1px solid #84ad8b4f;
   border-radius: 25px;
   color: #f1f9ee;
-  background: radial-gradient(ellipse at 68% 34%, #2e6247 0%, transparent 61%), linear-gradient(143deg, #172e28 14%, #204633 59%, #182d25 100%);
-  box-shadow: 0 20px 48px #142c2430;
+  background: radial-gradient(ellipse at 76% 34%, #32664e 0%, transparent 56%), radial-gradient(ellipse at 20% 104%, #315445 0%, transparent 49%), linear-gradient(148deg, #122a26 12%, #214634 63%, #142d26);
+  box-shadow: 0 22px 58px #142c243b, inset 0 1px #d5f4dd30;
 }
 .login-intro::before {
   content: '';
@@ -39,8 +39,8 @@
   inset: 0;
   background-image: radial-gradient(circle, #c7e6bc74 1px, transparent 1.3px);
   background-size: 19px 19px;
-  opacity: .4;
-  mask-image: radial-gradient(ellipse at 67% 39%, #000 6%, transparent 63%);
+  opacity: .34;
+  mask-image: radial-gradient(ellipse at 62% 42%, #000 9%, transparent 67%);
 }
 .login-brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 680; font-size: 1.075rem; letter-spacing: -.03em; }
 .login-intro-copy { position: relative; z-index: 1; margin-top: auto; }
@@ -94,7 +94,7 @@
   background: linear-gradient(145deg, #234c39c4, #17392bc4);
   box-shadow: 0 16px 42px #142c2660, inset 0 1px 0 #e7fae835;
   backdrop-filter: blur(10px);
-  animation: glass-rise .55s var(--ease-out) both;
+  animation: glass-rise .62s var(--ease-out) both;
 }
 .art-bars::before {
   content: '';
@@ -105,18 +105,29 @@
 }
 .art-bars i {
   flex: 1;
+  position: relative;
   transform-origin: bottom;
   background: linear-gradient(180deg, #d9f7c1, #7fb995 86%);
   border-radius: 5px 5px 3px 3px;
   box-shadow: inset 0 1px #f2ffe883;
 }
-:root[data-ambient='playing'] .art-bars i { animation: bar-appear .75s var(--ease-out) var(--bar-delay, .11s) both; }
+:root[data-ambient='playing'] .art-bars i { animation: bar-appear .68s var(--ease-out) var(--bar-delay, .24s) both; }
 .art-bars i:nth-child(1) { height: 32%; opacity: .52; }
-.art-bars i:nth-child(2) { height: 52%; opacity: .62; --bar-delay: .17s; }
-.art-bars i:nth-child(3) { height: 45%; opacity: .72; --bar-delay: .23s; }
-.art-bars i:nth-child(4) { height: 74%; opacity: .85; --bar-delay: .29s; }
-.art-bars i:nth-child(5) { height: 93%; --bar-delay: .35s; box-shadow: 0 0 16px #a7e4a22b, inset 0 1px #f2ffe8bb; }
-@keyframes bar-appear { from { transform: scaleY(.06); } }
+.art-bars i:nth-child(2) { height: 52%; opacity: .62; --bar-delay: .39s; }
+.art-bars i:nth-child(3) { height: 45%; opacity: .72; --bar-delay: .54s; }
+.art-bars i:nth-child(4) { height: 74%; opacity: .85; --bar-delay: .69s; }
+.art-bars i:nth-child(5) { height: 93%; --bar-delay: .84s; box-shadow: 0 0 16px #a7e4a22b, inset 0 1px #f2ffe8bb; }
+.art-bars i:last-child::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 24px #c8ffae86, inset 0 1px #fff;
+  opacity: 0;
+}
+:root[data-ambient='playing'] .art-bars i:last-child::after { animation: bar-highlight .75s ease-in-out 1.45s both; }
+@keyframes bar-appear { from { transform: scaleY(.02); opacity: 0; } }
+@keyframes bar-highlight { 45% { opacity: 1; } }
 .art-chip {
   position: absolute;
   display: grid;

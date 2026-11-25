@@ -12,12 +12,13 @@
 /* Semantic component tokens and table treatment adapted from shadcn/ui. */
 :root {
   color-scheme: light;
-  --background: #edf2e9;
+  --background: #eef3ed;
   --foreground: #192420;
   --card: #fff;
   --glass: #ffffffc9;
-  --canvas: radial-gradient(ellipse at 90% 1%, #dcecdf 0%, transparent 46%), radial-gradient(ellipse at 28% 95%, #f4eee4 0%, transparent 59%);
-  --ambient-wash: radial-gradient(ellipse at 76% 25%, #a0caaabe 0%, transparent 51%), radial-gradient(ellipse at 25% 80%, #e9d2aaad 0%, transparent 52%);
+  --canvas: linear-gradient(145deg, #e7efe6, #f3f6f0 56%, #edf0e7);
+  --ambient-wash: radial-gradient(ellipse at 78% 8%, #a7cfbc 0%, transparent 49%), radial-gradient(ellipse at 21% 97%, #eadbbd 0%, transparent 47%);
+  --ambient-line: #3d745b16;
   --table-header: #edf3ed;
   --table-hover: #f5f9f3;
   --muted: #f0f3ef;
@@ -53,8 +54,9 @@
   --foreground: #e9f1e8;
   --card: #22382d;
   --glass: #243b30de;
-  --canvas: radial-gradient(ellipse at 92% 0%, #284637 0%, transparent 55%), radial-gradient(ellipse at 15% 100%, #253a2b 0%, transparent 60%);
-  --ambient-wash: radial-gradient(ellipse at 81% 16%, #4c8063ab 0%, transparent 53%), radial-gradient(ellipse at 23% 80%, #71644387 0%, transparent 50%);
+  --canvas: linear-gradient(149deg, #172b24, #15251e 55%, #101e18);
+  --ambient-wash: radial-gradient(ellipse at 78% 8%, #437b63 0%, transparent 48%), radial-gradient(ellipse at 21% 97%, #776142 0%, transparent 43%);
+  --ambient-line: #a1d7b728;
   --table-header: #293f33;
   --table-hover: #2c4436;
   --muted: #32483a;
@@ -79,14 +81,20 @@
 body { margin: 0; min-width: 0; isolation: isolate; background-image: var(--canvas); background-attachment: fixed; }
 .ambient { position: fixed; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
 .ambient::before {
-  content: ''; position: absolute; inset: -13%; opacity: var(--ambient-opacity, .45); background: var(--ambient-wash);
-  animation: ambient-drift 19s ease-in-out infinite alternate both;
-  animation-play-state: paused;
+  content: ''; position: absolute; inset: -13%; opacity: var(--ambient-opacity, .43); background: var(--ambient-wash);
+  animation: ambient-drift 22s ease-in-out infinite alternate both paused;
+}
+.ambient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-radial-gradient(ellipse 68% 85% at 110% -23%, transparent 0 11%, var(--ambient-line) 11.08% 11.21%, transparent 11.3% 15%);
+  mask-image: radial-gradient(ellipse 60% 75% at 100% 0%, #000 10%, transparent 92%);
 }
 :root[data-ambient='playing'] .ambient::before { animation-play-state: running; }
 @keyframes ambient-drift {
-  from { transform: translate3d(-5.5%, -4%, 0) scale(1.02); }
-  to { transform: translate3d(8%, 7%, 0) scale(1.1); }
+  from { transform: translate3d(-4%, -3%, 0) scale(1.02); }
+  to { transform: translate3d(5%, 5%, 0) scale(1.08); }
 }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
