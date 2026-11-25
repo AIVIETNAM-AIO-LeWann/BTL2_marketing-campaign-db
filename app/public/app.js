@@ -12,6 +12,46 @@ let expenseRequest;
 let reportRequest;
 let deletingId;
 
+function preference(key, value) {
+  try {
+    if (value === undefined) return localStorage.getItem(key);
+    localStorage.setItem(key, value);
+  } catch { /* Preferences still apply for this page when browser storage is unavailable. */ }
+}
+
+function setupAppearance() {
+  const root = document.documentElement;
+  const theme = $('theme-toggle');
+  const sidebar = $('sidebar-toggle');
+
+  function applyTheme(dark) {
+    root.dataset.theme = dark ? 'dark' : 'light';
+    theme.setAttribute('aria-pressed', String(dark));
+    theme.title = dark ? 'Chuyển sang giao diện sáng' : 'Bật giao diện tối';
+    theme.querySelector('use').setAttribute('href', dark ? '/icons.svg#sun' : '/icons.svg#moon');
+  }
+
+  function applySidebar(compact) {
+    root.dataset.sidebar = compact ? 'compact' : 'expanded';
+    sidebar.setAttribute('aria-expanded', String(!compact));
+    const label = compact ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng';
+    sidebar.title = label;
+    sidebar.setAttribute('aria-label', label);
+    sidebar.querySelector('use').setAttribute('href', compact ? '/icons.svg#panel-left-open' : '/icons.svg#panel-left-close');
+  }
+
+  applyTheme(preference('campaign-desk-theme') === 'dark');
+  applySidebar(preference('campaign-desk-sidebar') === 'compact');
+  theme.addEventListener('click', () => {
+    applyTheme(root.dataset.theme !== 'dark');
+    preference('campaign-desk-theme', root.dataset.theme);
+  });
+  sidebar.addEventListener('click', () => {
+    applySidebar(root.dataset.sidebar !== 'compact');
+    preference('campaign-desk-sidebar', root.dataset.sidebar);
+  });
+}
+
 async function api(path, { signal, method = 'GET', data } = {}) {
   const response = await fetch(path, {
     method, signal,
@@ -371,11 +411,16 @@ document.querySelector('.skip-link').addEventListener('click', event => {
   event.preventDefault();
   $(location.hash === '#bao-cao' ? 'report-title' : 'expense-title').focus();
 });
-window.addEventListener('hashchange', showPage);
+window.addEventListener('hashchange', () => {
+  showPage();
+  window.scrollTo(0, 0);
+});
+setupAppearance();
 
 try {
   catalog = await api('/api/catalog');
   $('operator').textContent = catalog.actor;
+  $('operator-badge').title = `Nhân viên ${catalog.actor}`;
   const campaigns = () => catalog.campaigns.map(c => option(c.MaChienDich, `${c.MaChienDich} · ${c.TenChienDich}`));
   replaceOptions($('list-campaign'), campaigns(), 'Tất cả chiến dịch');
   replaceOptions($('report-campaign'), campaigns());

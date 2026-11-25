@@ -11,16 +11,19 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="Campaign Desk"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><span><strong>Campaign Desk</strong><small>Marketing đa kênh</small></span></a>
+  <header class="topbar" id="workspace-sidebar">
+    <a class="brand" href="/" aria-label="Campaign Desk"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><span class="brand-label"><strong>Campaign Desk</strong><small>Marketing đa kênh</small></span></a>
     <nav aria-label="Điều hướng chính">
-      <a href="#khoan-chi" data-page="khoan-chi" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg> Khoản chi</a>
-      <a href="#bao-cao" data-page="bao-cao"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg> Báo cáo</a>
+      <a href="#khoan-chi" data-page="khoan-chi" aria-label="Khoản chi" title="Khoản chi" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg><span class="nav-label">Khoản chi</span></a>
+      <a href="#bao-cao" data-page="bao-cao" aria-label="Báo cáo" title="Báo cáo"><svg aria-hidden="true"><use href="/icons.svg#chart-column"/></svg><span class="nav-label">Báo cáo</span></a>
     </nav>
-    <div class="operator"><span class="avatar" aria-hidden="true"><svg><use href="/icons.svg#user-round"/></svg></span><span><strong id="operator">…</strong><small>Nhân viên</small></span></div>
+    <div class="rail-footer">
+      <div class="operator" id="operator-badge"><span class="avatar" aria-hidden="true"><svg><use href="/icons.svg#user-round"/></svg></span><span class="operator-label"><strong id="operator">…</strong><small>Nhân viên</small></span></div>
+      <button id="theme-toggle" class="rail-button" type="button" aria-label="Giao diện tối" aria-pressed="false" title="Bật giao diện tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
+    </div>
   </header>
   <main id="main-content" tabindex="-1">
-    <div class="context-bar"><svg aria-hidden="true"><use href="/icons.svg#layout-grid"/></svg><span>Chiến dịch marketing</span><svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg><strong id="current-page">Khoản chi</strong></div>
+    <div class="context-bar"><button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Thu gọn thanh điều hướng" title="Thu gọn thanh điều hướng"><svg aria-hidden="true"><use href="/icons.svg#panel-left-close"/></svg></button><span>Chiến dịch marketing</span><svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg><strong id="current-page">Khoản chi</strong></div>
     <div class="workspace">
     <div id="notice" class="notice" role="status" hidden></div>
     <section id="khoan-chi" aria-labelledby="expense-title">
