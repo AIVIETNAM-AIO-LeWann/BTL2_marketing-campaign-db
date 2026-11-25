@@ -25,10 +25,10 @@ CREATE PROCEDURE sp_P2_DanhSachKhoanChi(
     IN p_SapXep VARCHAR(20)
 )
 BEGIN
-	DECLARE v_SapXep VARCHAR(20);
-    SET v_SapXep = UPPER(TRIM(COALESCE(p_SapXep, 'NGAY_GIAM')));
-    IF v_SapXep = '' THEN SET v_SapXep = 'NGAY_GIAM'; END IF;
-    
+    -- Chỉ chứa truy vấn theo yêu cầu 2.3; chuẩn hóa tham số ngay trong CTE.
+    WITH ThamSo AS (
+        SELECT COALESCE(NULLIF(UPPER(TRIM(p_SapXep)), ''), 'NGAY_GIAM') AS SapXep
+    )
     SELECT
         kc.MaKhoanChi,
         kc.MaHoatDong,
@@ -44,6 +44,7 @@ BEGIN
     FROM KhoanChi kc
     JOIN HoatDongTrienKhai hd ON hd.MaHoatDong = kc.MaHoatDong
     JOIN ChienDich cd        ON cd.MaChienDich = hd.MaChienDich
+    CROSS JOIN ThamSo ts
     WHERE
         -- Khoảng ngày bắt buộc, bao gồm 2 đầu
         p_TuNgay IS NOT NULL
@@ -58,12 +59,12 @@ BEGIN
              OR kc.NoiDungChi LIKE CONCAT('%', p_TuKhoa, '%')
              OR kc.MaChungTu LIKE CONCAT('%', p_TuKhoa, '%'))
         -- Sort hợp lệ (nếu sai -> WHERE false -> rỗng)
-        AND v_SapXep IN ('NGAY_TANG','NGAY_GIAM','TIEN_TANG','TIEN_GIAM')
+        AND ts.SapXep IN ('NGAY_TANG','NGAY_GIAM','TIEN_TANG','TIEN_GIAM')
     ORDER BY
-        CASE WHEN v_SapXep = 'NGAY_TANG' THEN kc.NgayPhatSinh END ASC,
-        CASE WHEN v_SapXep = 'NGAY_GIAM' THEN kc.NgayPhatSinh END DESC,
-        CASE WHEN v_SapXep = 'TIEN_TANG' THEN kc.SoTien END ASC,
-        CASE WHEN v_SapXep = 'TIEN_GIAM' THEN kc.SoTien END DESC,
+        CASE WHEN ts.SapXep = 'NGAY_TANG' THEN kc.NgayPhatSinh END ASC,
+        CASE WHEN ts.SapXep = 'NGAY_GIAM' THEN kc.NgayPhatSinh END DESC,
+        CASE WHEN ts.SapXep = 'TIEN_TANG' THEN kc.SoTien END ASC,
+        CASE WHEN ts.SapXep = 'TIEN_GIAM' THEN kc.SoTien END DESC,
         kc.MaKhoanChi ASC;  -- tiêu chí cuối ổn định
 END$$
 DELIMITER ;
