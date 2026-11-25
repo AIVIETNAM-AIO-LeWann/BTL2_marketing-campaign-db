@@ -37,9 +37,9 @@ Một chiến dịch marketing chạy trên nhiều kênh (email, mạng xã h�
 
 <div align="center">
 
-<img src="docs/images/demo.webp" alt="Thao tác trên Campaign Desk: đăng nhập, xem chi tiết khoản chi, sắp xếp, bảng lệnh, báo cáo, đổi giao diện" width="900">
+<a href="docs/images/demo.mp4"><img src="docs/images/demo-poster.webp" alt="Bấm để xem video thao tác trên Campaign Desk" width="900"></a>
 
-<sub>Đăng nhập → xem chi tiết khoản chi → sắp xếp → bảng lệnh <kbd>Ctrl</kbd>+<kbd>K</kbd> → báo cáo → đổi giao diện. Quay trực tiếp từ ứng dụng với dữ liệu mẫu. <a href="docs/images/demo.mp4">Xem bản video rõ nét hơn (MP4)</a>.</sub>
+<sub>▶ <b><a href="docs/images/demo.mp4">Xem video thao tác</a></b> (khoảng 15 giây): đăng nhập → chi tiết khoản chi → sắp xếp → bảng lệnh <kbd>Ctrl</kbd>+<kbd>K</kbd> → báo cáo → đổi giao diện. Quay trực tiếp từ ứng dụng với dữ liệu mẫu.</sub>
 
 </div>
 
