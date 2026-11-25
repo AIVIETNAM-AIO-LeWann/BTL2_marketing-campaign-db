@@ -2,6 +2,8 @@
 -- P2.2 — Trigger nghiệp vụ và thuộc tính dẫn xuất TongChiPhiThucTe
 -- Chạy SAU khi đã dựng phần 1 (01..06), trong một phiên quản trị,
 -- trên database chưa chạy file này (ALTER sẽ báo lỗi nếu cột đã có).
+-- Tạm dừng ghi dữ liệu trong lúc nạp file: ALTER và CREATE/DROP TRIGGER
+-- có hiệu lực riêng, trước khi hoàn tất bước tính lại tổng ở cuối file.
 -- =====================================================================
 --
 -- 1. RÀNG BUỘC NGHIỆP VỤ RB07
@@ -188,7 +190,7 @@ END$$
 DELIMITER ;
 
 -- ---------------------------------------------------------------------
--- E. Khởi tạo tổng từ dữ liệu gốc (sau khi trigger đã có, để không sót ghi đồng thời)
+-- E. Khởi tạo tổng của dữ liệu có sẵn sau khi cài trigger
 -- ---------------------------------------------------------------------
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 START TRANSACTION;
@@ -235,10 +237,10 @@ WHERE h.TongChiPhiThucTe<>v.TongChiPhiThucTe;
 --       "DuongDanTaiNguyen":null,"DuongDanBaiDang":null}','[]');
 --   SELECT COUNT(*) FROM HoatDongTrienKhai WHERE MaHoatDong='TEST_HD'; -- 0
 --
--- F5. RB07 vượt trần do chuyển hoạt động sang chiến dịch khác: lỗi RB07
---   INSERT INTO PhanCong VALUES ('NV05','CD01','Ho tro','2026-11-01','2026-11-30'); -- để RB05 không chặn trước
---   UPDATE HoatDongTrienKhai SET NganSachDuocCap=15000001 WHERE MaHoatDong='HD01';  -- CD01: 18.000.001 (OK)
---   UPDATE HoatDongTrienKhai SET MaChienDich='CD01' WHERE MaHoatDong='HD03';        -- +2.000.000 => RB07
+-- F5. Chuyển hoạt động sang chiến dịch cùng thương hiệu: xem ca thử
+--   test_budget_transfer_uses_destination_limit trong test_expense_integration.py.
+--   Ca thử dựng chiến dịch đích có đủ phân công, thử ngân sách thiếu 1 VND
+--   rồi tăng lên vừa đủ để kiểm chứng chuyển thành công.
 --
 -- F6. Giảm trần chiến dịch: bằng tổng OK, dưới tổng lỗi RB07
 --   UPDATE ChienDich SET NganSachDuocDuyet=5000000 WHERE MaChienDich='CD01'; -- OK
