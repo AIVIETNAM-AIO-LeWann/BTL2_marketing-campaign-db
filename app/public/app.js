@@ -1,5 +1,6 @@
 import './ambient.js';
 import './validity-vi.js';
+import { setupPalette } from './palette.js';
 
 const $ = (id) => document.getElementById(id);
 const filters = $('expense-filters');
@@ -551,6 +552,28 @@ $('logout').addEventListener('click', async () => {
   }
 });
 setupAppearance();
+
+function goTo(page) {
+  if (pageFromHash() !== page) { history.pushState(null, '', `#${page}`); transitionToPage(); }
+}
+const openPalette = setupPalette(() => [
+  { label: 'Khoản chi', hint: 'Trang', run: () => goTo('khoan-chi') },
+  { label: 'Báo cáo chi phí', hint: 'Trang', run: () => goTo('bao-cao') },
+  ...($('open-create').disabled ? [] : [{ label: 'Thêm khoản chi', hint: 'Lệnh', run: () => { goTo('khoan-chi'); openEditor(); } }]),
+  { label: 'Đổi giao diện sáng/tối', hint: 'Lệnh', run: () => $('theme-toggle').click() },
+  { label: 'Thu gọn hoặc mở thanh điều hướng', hint: 'Lệnh', run: () => $('sidebar-toggle').click() },
+  ...(catalog?.campaigns ?? []).map(c => ({ label: `${c.MaChienDich} · ${c.TenChienDich}`, hint: 'Lọc khoản chi theo chiến dịch', run: () => {
+    goTo('khoan-chi'); $('list-campaign').value = c.MaChienDich; syncListActivity(); void loadExpenses();
+  } })),
+], query => ({ label: `Tìm khoản chi “${query}”`, hint: 'Tìm kiếm', run: () => {
+  goTo('khoan-chi'); filters.elements.q.value = query; void loadExpenses();
+} }));
+$('palette-open').addEventListener('click', openPalette);
+document.addEventListener('keydown', event => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b' && !event.shiftKey && !event.altKey) {
+    event.preventDefault(); $('sidebar-toggle').click();
+  }
+});
 
 try {
   catalog = await api('/api/catalog');

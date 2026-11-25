@@ -23,6 +23,7 @@ const staticFiles = new Map([
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/ambient.js', ['ambient.js', 'text/javascript; charset=utf-8']],
   ['/validity-vi.js', ['validity-vi.js', 'text/javascript; charset=utf-8']],
+  ['/palette.js', ['palette.js', 'text/javascript; charset=utf-8']],
   ['/login.css', ['login.css', 'text/css; charset=utf-8']],
   ['/login.js', ['login.js', 'text/javascript; charset=utf-8']],
   ['/icons.svg', ['icons.svg', 'image/svg+xml']],
