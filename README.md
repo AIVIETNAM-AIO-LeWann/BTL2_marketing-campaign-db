@@ -37,9 +37,9 @@ Một chiến dịch marketing chạy trên nhiều kênh (email, mạng xã h�
 
 <div align="center">
 
-<a href="docs/images/demo.mp4"><img src="docs/images/demo-poster.webp" alt="Bấm để xem video thao tác trên Campaign Desk" width="900"></a>
+<img src="docs/images/login.webp" alt="Màn hình đăng nhập Campaign Desk" width="900">
 
-<sub>▶ <b><a href="docs/images/demo.mp4">Xem video thao tác</a></b> (khoảng 15 giây): đăng nhập → chi tiết khoản chi → sắp xếp → bảng lệnh <kbd>Ctrl</kbd>+<kbd>K</kbd> → báo cáo → đổi giao diện. Quay trực tiếp từ ứng dụng với dữ liệu mẫu.</sub>
+<sub><b>Màn hình đăng nhập</b>: phiên HttpOnly 8 giờ, giới hạn thử sai theo từng người, giao diện sáng và tối.</sub>
 
 </div>
 
@@ -51,10 +51,6 @@ Một chiến dịch marketing chạy trên nhiều kênh (email, mạng xã h�
   <tr>
     <td width="50%"><img src="docs/images/drawer.webp" alt="Chi tiết khoản chi"><br><sub><b>Chi tiết khoản chi</b>: tỷ trọng trong kỳ lọc, sao chép mã, sửa và xóa</sub></td>
     <td width="50%"><img src="docs/images/palette.webp" alt="Bảng lệnh nhanh"><br><sub><b>Bảng lệnh</b> <kbd>Ctrl</kbd>+<kbd>K</kbd>: chuyển trang, lọc chiến dịch, tìm khoản chi</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/images/login.webp" alt="Đăng nhập"><br><sub><b>Đăng nhập</b> với phiên HttpOnly và giới hạn thử sai theo từng người</sub></td>
-    <td width="50%"><img src="docs/images/expenses-light.webp" alt="Giao diện sáng"><br><sub><b>Giao diện sáng và tối</b>, nhớ lựa chọn của người dùng</sub></td>
   </tr>
 </table>
 
