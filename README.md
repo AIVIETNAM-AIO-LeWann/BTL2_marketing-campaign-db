@@ -92,7 +92,7 @@ File trigger thêm cột tổng chi phí và chỉ chạy một lần trên mỗ
 | KhoanChi | 11 |
 | KetQuaNgay | 20 |
 
-Tên người, thương hiệu, địa chỉ `.example` và tài khoản nền tảng là dữ liệu minh họa. Các chuỗi `MatKhauBam` là giá trị mẫu **không dùng để đăng nhập**; chưa có chức năng xác thực. Tiền tệ thống nhất VND, dùng `DECIMAL(18,0)`.
+Tên người, thương hiệu, địa chỉ `.example` và tài khoản nền tảng là dữ liệu minh họa. Các chuỗi `MatKhauBam` là giá trị mẫu. Web dùng tài khoản `demo` và `DEMO_PASSWORD` trong `app/.env` để đăng nhập. Tiền tệ thống nhất VND, dùng `DECIMAL(18,0)`.
 
 Dữ liệu có hoạt động vượt ngân sách thực chi (được phép), chiến dịch hoàn thành/hủy giữ lịch sử, tài khoản nhân viên đã khóa, số chuyển đổi bằng 0, số chuyển đổi chưa biết (`NULL`), danh sách và tài khoản MXH chưa được sử dụng nhưng đã xác định thương hiệu sở hữu.
 
@@ -148,4 +148,4 @@ GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, r�
 
 ## Web quản lý khoản chi
 
-Ứng dụng Node.js trong `app/` gọi trực tiếp các routine MySQL. Cách cấp quyền cho tài khoản web, cấu hình chạy, kịch bản trình bày và tùy chọn chia sẻ qua Cloudflare Tunnel có trong [hướng dẫn phần 3](docs/part3-web.md).
+Ứng dụng Node.js trong `app/` gọi trực tiếp các routine MySQL. Người phụ trách demo bắt đầu từ [hướng dẫn Cloudflare](docs/demo-cloudflare.md) để nạp dữ liệu, chạy web và chia sẻ URL HTTPS. Xem [hướng dẫn phần 3](docs/part3-web.md) để đối chiếu các chức năng, cài thủ công hoặc lấy kịch bản trình bày.

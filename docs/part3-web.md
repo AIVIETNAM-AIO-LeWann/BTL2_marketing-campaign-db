@@ -45,4 +45,4 @@ Giữ `.env` cục bộ. Tài khoản web MySQL chỉ cần role `marketing_web`
 
 ## Chia sẻ demo qua Cloudflare Tunnel
 
-Sau khi web chạy cục bộ, người phụ trách demo có thể chạy `cloudflared tunnel --url http://127.0.0.1:8080` trên cùng máy. Cloudflare cấp một URL HTTPS tạm thời. Giữ Node.js, MySQL và `cloudflared` đang chạy trong buổi demo. Chia sẻ mật khẩu demo riêng với người xem. Phương án này đưa web ra Internet qua tunnel và MySQL vẫn chạy tại máy demo. Xem [hướng dẫn Quick Tunnels của Cloudflare](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
+Xem [hướng dẫn demo qua Cloudflare](demo-cloudflare.md) để tạo nhanh database mẫu, mở URL HTTPS và kiểm tra các thao tác trước buổi trình bày.
