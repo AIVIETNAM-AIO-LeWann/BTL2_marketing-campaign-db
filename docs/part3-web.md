@@ -20,6 +20,18 @@ Bề mặt kính mờ và thanh điều hướng thu gọn lấy cảm hứng t�
 
 Nút phát hoặc tạm dừng nền có ở màn hình đăng nhập và trên thanh điều hướng của ứng dụng. Nút này cũng điều khiển nhịp sáng ngẫu nhiên trên các cột biểu đồ và chuyển động trong khung minh họa đăng nhập. Trình duyệt dùng chung lựa chọn này cho cả hai màn hình. Khi hệ điều hành yêu cầu giảm chuyển động, hiệu ứng nền, nhịp sáng và chuyển cảnh tự tắt.
 
+## Thao tác nhanh trên giao diện
+
+| Thao tác | Cách dùng |
+|---|---|
+| Bảng lệnh | `Ctrl+K` (hoặc `⌘K`) hoặc ô tìm ở thanh trên. Chuyển trang, thêm khoản chi, đổi giao diện, thu gọn thanh điều hướng, lọc theo chiến dịch hoặc tìm khoản chi theo từ khóa. Dùng mũi tên để chọn, `Enter` để chạy, `Esc` để đóng. |
+| Thu gọn thanh điều hướng | `Ctrl+B` (hoặc `⌘B`) hoặc nút cạnh đường dẫn trang. |
+| Chọn chiến dịch đang xem | Nút chiến dịch ở thanh trên. Danh sách khoản chi, tổng chi, biểu đồ và (ở tab Báo cáo) chiến dịch báo cáo đổi theo lựa chọn. |
+| Xem chi tiết một khoản chi | Bấm vào hàng trong bảng để mở khung chi tiết bên phải: giá trị, tỷ trọng trong kỳ đang lọc, hoạt động, chiến dịch, ngày, chứng từ. Từ đó sao chép mã, lọc theo hoạt động, và sửa hoặc xóa nếu khoản chi thuộc nhân viên demo và chưa khóa sổ. |
+| Sắp xếp nhanh | Các nút **Mới nhất**, **Cao nhất**, **Thấp nhất**, **Cũ nhất** trên bảng, đồng bộ với ô Sắp xếp. |
+| Kiểu biểu đồ | Nút chuyển biểu đồ cột hoặc đường xu hướng trên thẻ tổng chi. |
+| Tông màu | Bốn chấm màu ở thanh trên đổi tông. Nút ở cuối thanh điều hướng đổi sáng/tối. Trình duyệt nhớ các lựa chọn này. |
+
 ## Chạy web
 
 1. Dùng Node.js 22.9 trở lên và MySQL 8.4. Nạp phần 1 và phần 2 theo thứ tự trong [README](../README.md). Dùng database riêng có dữ liệu mẫu khi demo.
@@ -45,4 +57,4 @@ Giữ `.env` cục bộ. Tài khoản web MySQL chỉ cần role `marketing_web`
 
 ## Chia sẻ demo qua Cloudflare Tunnel
 
-Xem [hướng dẫn demo qua Cloudflare](demo-cloudflare.md) để tạo nhanh database mẫu, mở URL HTTPS và kiểm tra các thao tác trước buổi trình bày.
+Xem [hướng dẫn demo qua Cloudflare](demo-cloudflare.md) để tạo nhanh database mẫu, mở URL HTTPS và kiểm tra các thao tác trước buổi trình bày. Muốn chạy liên tục 24/7 trên một máy chủ, xem [hướng dẫn triển khai bằng Docker](deploy-docker.md).
