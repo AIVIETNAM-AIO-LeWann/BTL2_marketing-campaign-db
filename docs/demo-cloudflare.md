@@ -66,7 +66,7 @@ Khi trạng thái tunnel là **Healthy**, mở `https://<hostname>` rồi chạy
 |---|---|---|
 | Cổng web, kết nối MySQL, mật khẩu demo | `app/.env`, xem mẫu trong `app/.env.example` | Khởi động lại web. Khi đổi cổng, chạy lại Quick Tunnel hoặc cập nhật Service URL của tunnel có tên. |
 | Tên hiển thị, mô tả và nền ở màn đăng nhập | `app/public/login.html`, `app/public/login.css` | Tải lại trang đăng nhập. |
-| Bố cục, màu, biểu đồ và nhịp sáng trong ứng dụng | `app/public/index.html`, `app/public/styles.css`, `app/public/app.js`, `app/public/ambient.js` | Tải lại trang. Giữ đồng bộ các `id` mà JavaScript dùng. |
+| Bố cục, màu, biểu đồ và nhịp sáng trong ứng dụng | `app/public/index.html`, `app/public/styles.css`, `app/public/app.js`, `app/public/palette.js`, `app/public/ambient.js`, `app/public/motion.js`, `app/public/fx.js` | Tải lại trang. Giữ đồng bộ các `id` mà JavaScript dùng. |
 | API, truy vấn và xử lý lỗi | `app/server.mjs` | Dùng `npm run dev` trong `app` để Node tự khởi động lại khi sửa server. Dùng `npm start` khi demo. |
 
 Để cập nhật bản đang chạy từ GitHub, dùng `git pull --ff-only` trên đúng nhánh. Nếu máy có chỉnh sửa cần giữ, lưu các chỉnh sửa đó trên nhánh riêng trước khi kéo. Chạy `npm ci` trong `app` nếu file khóa dependencies thay đổi. Khởi động lại web khi cập nhật mã server hoặc cấu hình. Lần cập nhật giao diện có thể kiểm tra ngay bằng cách tải lại trang.
