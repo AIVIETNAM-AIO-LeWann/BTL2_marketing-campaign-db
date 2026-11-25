@@ -34,6 +34,7 @@ docs/
   constraints.md            # đối chiếu từng yêu cầu BTL1 với cách hiện thực
   design-decisions.md       # giải thích các thay đổi và giới hạn
   part1-test-results.md      # kết quả kiểm thử phần 1
+  part2-triggers.md          # ma trận DML và các lệnh demo mục 2.2
   part2-functions.md         # đặc tả, minh họa và đối chiếu yêu cầu 2.4
 ```
 
@@ -143,7 +144,7 @@ python database/tests/test_expense_integration.py --mysql mysql --host 127.0.0.1
 python database/tests/test_marketing_functions.py --mysql mysql --host 127.0.0.1 --port 3306 --user root
 ```
 
-GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, rồi nạp phần 2 và kiểm tra cả phần ghép. Xem kết quả cụ thể của commit/PR. Kết quả kiểm thử phần 1 ở [docs/part1-test-results.md](docs/part1-test-results.md); phần 2.4 và các ca minh họa ở [docs/part2-functions.md](docs/part2-functions.md).
+GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, rồi nạp phần 2 và kiểm tra cả phần ghép. Xem kết quả cụ thể của commit/PR. Các tài liệu kèm theo gồm [kết quả kiểm thử phần 1](docs/part1-test-results.md), [hướng dẫn demo trigger 2.2](docs/part2-triggers.md) và [hướng dẫn demo function 2.4](docs/part2-functions.md).
 
 ## Phạm vi phần tiếp theo
 

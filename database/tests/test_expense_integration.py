@@ -1,4 +1,4 @@
-"""P2.1/P2.3 integration checks against a disposable seeded database.
+"""P2.1–P2.3 integration checks against a disposable seeded database.
 
 Load part2/01, 02 and 03 first. Successful CRUD fixtures delete their own rows;
 all rejected calls must leave the seed and stored expense totals unchanged.
@@ -43,6 +43,74 @@ class Part2Review(unittest.TestCase):
         self.assertEqual(self.ok('SELECT h.MaHoatDong FROM HoatDongTrienKhai h '
             'LEFT JOIN KhoanChi k USING(MaHoatDong) GROUP BY h.MaHoatDong,h.TongChiPhiThucTe '
             'HAVING h.TongChiPhiThucTe<>COALESCE(SUM(k.SoTien),0);'), [])
+
+    def test_budget_transfer_uses_destination_limit(self):
+        # Same brand and dates as CD02. NV05 is both the owner of HD03 and
+        # the recorder/updater of its historical rows, so assign NV05 first.
+        campaign = dict(MaChienDich='RV_BUDGET', TenChienDich='Budget transfer fixture',
+                        NgayBatDau='2026-11-01', NgayKetThucDuKien='2026-11-30',
+                        NganSachDuocDuyet=1999999, MaThuongHieu='TH02', MaNhanVien='NV03')
+        self.ok(f'CALL sp_P1_TaoChienDich({lit(json.dumps(campaign))});')
+        try:
+            move = "UPDATE HoatDongTrienKhai SET MaChienDich='RV_BUDGET' WHERE MaHoatDong='HD03';\n"
+            result = run(
+                "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED; START TRANSACTION;\n"
+                "INSERT INTO PhanCong VALUES ('NV05','RV_BUDGET','Ho tro','2026-11-01','2026-11-30');\n"
+                + move +
+                "SELECT MaChienDich FROM HoatDongTrienKhai WHERE MaHoatDong='HD03';\n"
+                "UPDATE ChienDich SET NganSachDuocDuyet=2000000 WHERE MaChienDich='RV_BUDGET';\n"
+                + move +
+                "SELECT MaChienDich FROM HoatDongTrienKhai WHERE MaHoatDong='HD03';\n"
+                "ROLLBACK; DO RELEASE_LOCK('marketing_btl.integrity');", force=True)
+            errors = result.stderr.strip().splitlines()
+            self.assertEqual(len(errors), 1, result.stderr)
+            self.assertIn('RB07:', errors[0])
+            self.assertEqual(result.stdout.strip().splitlines(), ['CD02', 'RV_BUDGET'])
+        finally:
+            self.ok("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED; START TRANSACTION; "
+                    "SET @p1_internal=1; DELETE FROM PhanCong WHERE MaChienDich='RV_BUDGET'; "
+                    "DELETE FROM ChienDich WHERE MaChienDich='RV_BUDGET'; SET @p1_internal=0; "
+                    "CALL sp_P1_KiemTraToanVen(); COMMIT; DO RELEASE_LOCK('marketing_btl.integrity');")
+
+    def test_trigger_direct_insert_update_move_delete_and_rollback(self):
+        # Direct DML exercises the triggers without the CRUD procedure checks.
+        rows = self.ok("""
+            SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+            START TRANSACTION;
+            INSERT INTO KhoanChi(MaKhoanChi,MaHoatDong,MaNguoiGhiNhan,NgayPhatSinh,SoTien,NoiDungChi)
+            VALUES ('KC_DEMO_22','HD01','NV04','2026-11-07',9000000,'Demo trigger');
+            SELECT TongChiPhiThucTe FROM HoatDongTrienKhai WHERE MaHoatDong='HD01';
+            UPDATE KhoanChi SET SoTien=9500000 WHERE MaKhoanChi='KC_DEMO_22';
+            SELECT TongChiPhiThucTe FROM HoatDongTrienKhai WHERE MaHoatDong='HD01';
+            UPDATE KhoanChi SET MaHoatDong='HD02',SoTien=800000 WHERE MaKhoanChi='KC_DEMO_22';
+            SELECT MaHoatDong,TongChiPhiThucTe FROM HoatDongTrienKhai
+            WHERE MaHoatDong IN ('HD01','HD02') ORDER BY MaHoatDong;
+            DELETE FROM KhoanChi WHERE MaKhoanChi='KC_DEMO_22';
+            SELECT TongChiPhiThucTe FROM HoatDongTrienKhai WHERE MaHoatDong='HD02';
+            DELETE FROM KhoanChi WHERE MaKhoanChi='KC02';
+            SELECT TongChiPhiThucTe FROM HoatDongTrienKhai WHERE MaHoatDong='HD02';
+            ROLLBACK;
+            DO RELEASE_LOCK('marketing_btl.integrity');
+            SELECT TongChiPhiThucTe FROM HoatDongTrienKhai WHERE MaHoatDong='HD02';
+        """)
+        self.assertEqual(rows, [['12000000'], ['12500000'], ['HD01','3000000'],
+                                ['HD02','4300000'], ['3500000'], ['0'], ['3500000']])
+        self.reconcile()
+
+    def test_trigger_blocks_direct_history_writes_and_wrong_total(self):
+        for sql, message in [
+            ("UPDATE KhoanChi SET MaHoatDong='HD01',MaNguoiGhiNhan='NV04' WHERE MaKhoanChi='KC05';", 'RB16:'),
+            ("INSERT INTO KhoanChi(MaKhoanChi,MaHoatDong,MaNguoiGhiNhan,NgayPhatSinh,SoTien,NoiDungChi) "
+             "VALUES ('RV_CLOSED','HD05','NV06','2026-11-07',1000,'Closed');", 'RB16:'),
+            ("DELETE FROM KhoanChi WHERE MaKhoanChi='KC05';", 'RB16:'),
+            ("UPDATE HoatDongTrienKhai SET TongChiPhiThucTe=0 WHERE MaHoatDong='HD01';", 'P2_TONGCHI:'),
+        ]:
+            with self.subTest(sql=sql):
+                self.error('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED; '
+                           'START TRANSACTION;\n' + sql + '\nROLLBACK;', message)
+        self.assertEqual(self.ok("SELECT MaHoatDong,SoTien FROM KhoanChi WHERE MaKhoanChi='KC05';"),
+                         [['HD05','1200000']])
+        self.reconcile()
 
     def test_crud_lifecycle_move_and_noop(self):
         self.assertEqual(self.ok(f"CALL sp_P2_ThemKhoanChi('NV04',{payload(MaChungTu='RV')});"), [['RV_COST','THEM','1']])
