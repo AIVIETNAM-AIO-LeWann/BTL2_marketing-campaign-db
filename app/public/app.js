@@ -7,6 +7,8 @@ import {
   hideTooltip,
   initMotion,
   motionAllowed,
+  pulseElement,
+  revealWords,
   shakeElement,
   showTooltip,
   staggerChildren,
@@ -24,8 +26,19 @@ const num = new Intl.NumberFormat('vi-VN');
 const decimalNum = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 });
 const finished = new Set(['HOAN_THANH', 'HUY']);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const DONUT_COLORS = ['#c4ee4f', '#5ed394', '#5ba5dc', '#e1b354', '#df7d6b'];
-const DONUT_COLORS_LIGHT = ['#176044', '#2e8f66', '#4682b4', '#c18a45', '#b8675a'];
+const VALID_ACCENTS = new Set(['sapphire', 'emerald', 'amethyst', 'amber']);
+
+function chartPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  return [1, 2, 3, 4, 5].map(i => cs.getPropertyValue(`--chart-${i}`).trim() || '#ffa45c');
+}
+
+// Strip redundant campaign suffixes after em-dash / en-dash / hyphen so activity titles stay crisp & clean
+function cleanActivityName(rawName) {
+  if (!rawName) return '';
+  const parts = String(rawName).split(/\s*[—–]\s*|\s+-\s+/);
+  return parts[0].trim() || String(rawName).trim();
+}
 
 let catalog;
 let expenseRequest;
@@ -42,6 +55,41 @@ let drawerItem = null;
 initMotion();
 initFX();
 
+// Assign subtle sequential cascade indices to shell, filters, hero pills, dialogs & drawer items
+staggerChildren(document.querySelector('nav'), 'a[data-page]');
+staggerChildren(filters, ':scope > label');
+staggerChildren(reportFilters, ':scope > label');
+staggerChildren($('hero-pills'), '.hero-pill');
+staggerChildren(editor.querySelector('.form-fields'), ':scope > label');
+staggerChildren(document.querySelector('.drawer-meta-grid'), ':scope > div');
+staggerChildren(document.querySelector('.drawer-actions'), ':scope > button');
+for (const theadRow of document.querySelectorAll('thead tr')) staggerChildren(theadRow, 'th');
+
+// Polite liquid pulse feedback when changing any filter select or date input
+for (const formEl of [filters, reportFilters]) {
+  formEl.addEventListener('change', (e) => {
+    const field = e.target;
+    if (!(field instanceof HTMLElement) || !motionAllowed()) return;
+    field.classList.remove('field-pulse');
+    void field.offsetWidth;
+    field.classList.add('field-pulse');
+    field.addEventListener('animationend', () => field.classList.remove('field-pulse'), { once: true });
+  });
+}
+
+// Gentle typing micro-motion on the search icon
+(() => {
+  const searchInput = filters.elements.q;
+  const wrap = searchInput?.closest('.input-icon');
+  if (!searchInput || !wrap) return;
+  let typingTimer;
+  searchInput.addEventListener('input', () => {
+    wrap.dataset.typing = 'true';
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => { delete wrap.dataset.typing; }, 420);
+  });
+})();
+
 function preference(key, value) {
   try {
     if (value === undefined) return localStorage.getItem(key);
@@ -53,6 +101,7 @@ function setupAppearance() {
   const root = document.documentElement;
   const theme = $('theme-toggle');
   const sidebar = $('sidebar-toggle');
+  const topbar = $('workspace-sidebar');
 
   function applyTheme(dark) {
     root.dataset.theme = dark ? 'dark' : 'light';
@@ -61,7 +110,15 @@ function setupAppearance() {
     theme.querySelector('use').setAttribute('href', dark ? '/icons.svg#sun' : '/icons.svg#moon');
   }
 
-  function applySidebar(compact) {
+  function applyAccent(name) {
+    const accent = VALID_ACCENTS.has(name) ? name : 'amber';
+    root.dataset.accent = accent;
+    for (const dot of document.querySelectorAll('#accent-picker .accent-dot')) {
+      dot.setAttribute('aria-pressed', String(dot.dataset.swatch === accent));
+    }
+  }
+
+  function applySidebar(compact, animateMorph = false) {
     root.dataset.sidebar = compact ? 'compact' : 'expanded';
     sidebar.setAttribute('aria-expanded', String(!compact));
     const label = compact ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng';
@@ -69,22 +126,105 @@ function setupAppearance() {
     sidebar.setAttribute('aria-label', label);
     sidebar.querySelector('use').setAttribute('href', compact ? '/icons.svg#panel-left-open' : '/icons.svg#panel-left-close');
     hideTooltip();
+
+    if (animateMorph && motionAllowed()) {
+      // Unhurried 3D VisionOS origami dock fold/unfurl choreography
+      sidebar.querySelector('svg')?.animate?.(
+        [
+          { transform: 'perspective(360px) rotateY(0deg) scale(.9)' },
+          { transform: 'perspective(360px) rotateY(180deg) scale(1.06)' },
+          { transform: 'perspective(360px) rotateY(360deg) scale(1)' },
+        ],
+        { duration: 760, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+      );
+
+      delete topbar.dataset.morphing;
+      void topbar.offsetWidth;
+      topbar.dataset.morphing = compact ? 'folding' : 'unfolding';
+      burstFromElement(sidebar, { count: 14, spread: 2.8, intensity: 0.78 });
+
+      // Graceful 3D glass prism turn while contracting into or unfurling out of the levitating pill dock
+      topbar.animate?.(
+        compact
+          ? [
+              { transform: 'perspective(1100px) rotateY(0deg) scale(1)' },
+              { transform: 'perspective(1100px) rotateY(-13deg) scale(.975)' },
+              { transform: 'perspective(1100px) rotateY(0deg) scale(1)' },
+            ]
+          : [
+              { transform: 'perspective(1100px) rotateY(0deg) scale(1)' },
+              { transform: 'perspective(1100px) rotateY(11deg) scale(1.012)' },
+              { transform: 'perspective(1100px) rotateY(0deg) scale(1)' },
+            ],
+        { duration: 860, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+      );
+
+      // Staggered icon wave settling calmly inside the dock
+      const dockIcons = topbar.querySelectorAll('.brand-icon, nav a, .avatar, .rail-button');
+      dockIcons.forEach((node, idx) => {
+        node.animate?.(
+          [
+            { transform: 'translate3d(0, 0, 0) scale(1)' },
+            { transform: `translate3d(0, ${compact ? -4 : 4}px, 0) scale(${compact ? .9 : 1.07})` },
+            { transform: 'translate3d(0, 0, 0) scale(1)' },
+          ],
+          { duration: 680, delay: idx * 55, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+        );
+      });
+
+      $('workspace')?.animate?.(
+        [
+          { transform: 'translate3d(0, 0, 0) scale(1)' },
+          { transform: `translate3d(${compact ? -6 : 6}px, 0, 0) scale(.996)` },
+          { transform: 'translate3d(0, 0, 0) scale(1)' },
+        ],
+        { duration: 840, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+      );
+
+      setTimeout(() => { delete topbar.dataset.morphing; }, 960);
+      requestAnimationFrame(() => quickSort.sync());
+      setTimeout(() => quickSort.sync(), 860);
+    }
   }
 
   applyTheme(preference('campaign-desk-theme') !== 'light');
-  applySidebar(preference('campaign-desk-sidebar') === 'compact');
+  applyAccent(preference('campaign-desk-accent-v3') || 'amber');
+  applySidebar(preference('campaign-desk-sidebar') === 'compact', false);
+
   theme.addEventListener('click', () => {
     const nextDark = root.dataset.theme !== 'dark';
-    burstFromElement(theme, { count: 18, spread: 4.8 });
+    theme.querySelector('svg')?.animate?.(
+      [{ transform: 'rotate(0deg) scale(.85)' }, { transform: 'rotate(360deg) scale(1)' }],
+      { duration: 480, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+    );
+    burstFromElement(theme, { count: 14, spread: 4.0 });
     transitionTheme(theme, () => {
       applyTheme(nextDark);
       preference('campaign-desk-theme', root.dataset.theme);
+      if (activePage === 'bao-cao') void loadReports();
     });
   });
+
+  for (const dot of document.querySelectorAll('#accent-picker .accent-dot')) {
+    dot.addEventListener('click', () => {
+      const next = dot.dataset.swatch;
+      if (root.dataset.accent === next) return;
+      burstFromElement(dot, { count: 16, spread: 4.2 });
+      transitionTheme(dot, () => {
+        applyAccent(next);
+        preference('campaign-desk-accent-v3', next);
+        if (lastExpenseItems.length) renderExpenses(lastExpenseItems, parameters(filters));
+        if (activePage === 'bao-cao') void loadReports();
+      });
+    });
+  }
+
   sidebar.addEventListener('click', () => {
-    applySidebar(root.dataset.sidebar !== 'compact');
+    applySidebar(root.dataset.sidebar !== 'compact', true);
     preference('campaign-desk-sidebar', root.dataset.sidebar);
   });
+
+  return { applyAccent };
 }
 
 async function api(path, { signal, method = 'GET', data } = {}) {
@@ -183,6 +323,25 @@ function compactCurrency(value) {
   return `${num.format(Math.round(n))} ₫`;
 }
 
+function renderSplitCurrency(el, value) {
+  if (value === null || value === undefined) {
+    el.textContent = '—';
+    return;
+  }
+  const [whole, fraction] = String(value).split('.');
+  el.replaceChildren(document.createTextNode(num.format(BigInt(whole))));
+  if (fraction) {
+    const frac = document.createElement('span');
+    frac.className = 'num-frac';
+    frac.textContent = `,${fraction}`;
+    el.append(frac);
+  }
+  const unit = document.createElement('span');
+  unit.className = 'num-unit';
+  unit.textContent = '₫';
+  el.append(unit);
+}
+
 function day(value) {
   return value.split('-').reverse().join('/');
 }
@@ -209,7 +368,7 @@ function replaceOptions(select, values, placeholder, current = select.value) {
 function activityOptions(campaign, editable = false) {
   return catalog.activities
     .filter(activity => (!campaign || activity.MaChienDich === campaign) && (!editable || canWrite(activity)))
-    .map(activity => option(activity.MaHoatDong, `${activity.MaHoatDong} · ${activity.TenHoatDong}`));
+    .map(activity => option(activity.MaHoatDong, `${activity.MaHoatDong} · ${cleanActivityName(activity.TenHoatDong)}`));
 }
 
 function canWrite(activity) {
@@ -343,7 +502,7 @@ function renderActiveChips() {
   if (act) {
     const aObj = catalog?.activities?.find(a => a.MaHoatDong === act);
     chips.push({
-      label: `Hoạt động: ${aObj ? `${aObj.MaHoatDong} · ${aObj.TenHoatDong}` : act}`,
+      label: `Hoạt động: ${aObj ? `${aObj.MaHoatDong} · ${cleanActivityName(aObj.TenHoatDong)}` : act}`,
       clear: () => { filters.elements.activity.value = ''; void loadExpenses(); },
     });
   }
@@ -358,7 +517,11 @@ function renderActiveChips() {
     btn.type = 'button';
     btn.setAttribute('aria-label', `Xóa bộ lọc ${ch.label}`);
     btn.textContent = '×';
-    btn.addEventListener('click', ch.clear);
+    btn.addEventListener('click', () => {
+      if (!motionAllowed()) return ch.clear();
+      span.dataset.leaving = 'true';
+      setTimeout(ch.clear, 210);
+    });
     span.append(text, btn);
     return span;
   }));
@@ -408,7 +571,7 @@ function openDrawer(item) {
   statusEl.textContent = permitted ? 'Có thể sửa / xóa' : locked ? 'Đã khóa sổ' : 'Chỉ xem';
 
   $('drawer-title').textContent = item.NoiDungChi;
-  $('drawer-activity').textContent = `${item.MaHoatDong} · ${item.TenHoatDong}`;
+  $('drawer-activity').textContent = `${item.MaHoatDong} · ${cleanActivityName(item.TenHoatDong)}`;
   $('drawer-campaign').textContent = campaign ? `${campaign.MaChienDich} · ${campaign.TenChienDich}` : item.MaChienDich;
   $('drawer-date').textContent = day(item.NgayPhatSinh);
   $('drawer-receipt').textContent = item.MaChungTu || 'Không có chứng từ';
@@ -493,14 +656,25 @@ function setupCampaignSwitcher() {
 
   function closeMenu() {
     if (menu.hidden) return;
-    menu.hidden = true;
     trigger.setAttribute('aria-expanded', 'false');
+    if (!motionAllowed()) {
+      menu.hidden = true;
+      return;
+    }
+    menu.dataset.closing = 'true';
+    const done = () => {
+      delete menu.dataset.closing;
+      menu.hidden = true;
+    };
+    menu.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 240);
   }
 
   function openMenu() {
+    delete menu.dataset.closing;
     menu.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
-    const selected = menu.querySelector('[aria-selected="true"]') ?? menu.firstElementChild;
+    const selected = menu.querySelector('[aria-selected="true"]') ?? menu.querySelector('.campaign-option');
     selected?.focus();
   }
 
@@ -521,13 +695,25 @@ function setupCampaignSwitcher() {
         status: c.TrangThai,
       })),
     ];
-    menu.replaceChildren(...entries.map(entry => {
+    const hoverPill = document.createElement('span');
+    hoverPill.className = 'switcher-hover-pill';
+    hoverPill.setAttribute('aria-hidden', 'true');
+
+    const moveHover = (btn) => {
+      if (!btn) { hoverPill.dataset.visible = 'false'; return; }
+      hoverPill.style.setProperty('--sy', `${btn.offsetTop}px`);
+      hoverPill.style.setProperty('--sh', `${btn.offsetHeight}px`);
+      hoverPill.dataset.visible = 'true';
+    };
+
+    const optionNodes = entries.map((entry, idx) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'campaign-option';
       btn.setAttribute('role', 'option');
       btn.setAttribute('aria-selected', String(entry.value === current));
       btn.dataset.value = entry.value;
+      btn.style.setProperty('--stagger-i', String(Math.min(idx, 10)));
 
       const copy = document.createElement('span');
       copy.className = 'campaign-option-copy';
@@ -549,6 +735,8 @@ function setupCampaignSwitcher() {
       meta.append(check);
 
       btn.append(copy, meta);
+      btn.addEventListener('pointerenter', () => moveHover(btn));
+      btn.addEventListener('focus', () => moveHover(btn));
       btn.addEventListener('click', () => {
         closeMenu();
         if (select.value !== entry.value) {
@@ -559,7 +747,10 @@ function setupCampaignSwitcher() {
         trigger.focus();
       });
       return btn;
-    }));
+    });
+
+    menu.replaceChildren(hoverPill, ...optionNodes);
+    menu.onpointerleave = () => moveHover(null);
     sync();
   }
 
@@ -654,10 +845,11 @@ function renderSplineChart(visible, max) {
   grad.id = 'spline-grad';
   grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
   grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+  const primaryHex = chartPalette()[0];
   const s1 = document.createElementNS(ns, 'stop');
-  s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#c4ee4f'); s1.setAttribute('stop-opacity', '0.42');
+  s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', primaryHex); s1.setAttribute('stop-opacity', '0.42');
   const s2 = document.createElementNS(ns, 'stop');
-  s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', '#c4ee4f'); s2.setAttribute('stop-opacity', '0');
+  s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', primaryHex); s2.setAttribute('stop-opacity', '0');
   grad.append(s1, s2);
   defs.append(grad);
   svg.append(defs);
@@ -702,6 +894,7 @@ function renderSplineChart(visible, max) {
     dot.setAttribute('cy', p.y.toFixed(1));
     dot.setAttribute('r', '4.2');
     dot.setAttribute('class', 'spline-dot');
+    dot.style.setProperty('--stagger-i', String(idx));
     dot.setAttribute('tabindex', '0');
     dot.setAttribute('aria-label', `Thực chi ngày ${day(p.date)}: ${currency(p.amount)}`);
     const openTip = () => showTooltip(dot, {
@@ -758,6 +951,11 @@ function renderSpendChart(days) {
     column.setAttribute('tabindex', '0');
     column.setAttribute('aria-label', `Thực chi ngày ${day(date)}: ${currency(amount)}`);
 
+    const valTag = document.createElement('span');
+    valTag.className = 'chart-val-tag';
+    valTag.setAttribute('aria-hidden', 'true');
+    valTag.textContent = compactCurrency(amount);
+
     const track = document.createElement('span');
     track.className = 'chart-track';
     const fill = document.createElement('span');
@@ -769,7 +967,7 @@ function renderSpendChart(days) {
     const dayLabel = document.createElement('span');
     dayLabel.className = 'chart-day';
     dayLabel.setAttribute('aria-hidden', 'true');
-    if (visible.length <= 3 || index === 0 || index === visible.length - 1) dayLabel.textContent = day(date).slice(0, 5);
+    if (visible.length <= 4 || index === 0 || index === visible.length - 1) dayLabel.textContent = day(date).slice(0, 5);
 
     const openTip = () => showTooltip(track, {
       title: currency(amount),
@@ -781,7 +979,7 @@ function renderSpendChart(days) {
     column.addEventListener('pointerleave', hideTooltip);
     column.addEventListener('blur', hideTooltip);
 
-    column.append(track, dayLabel);
+    column.append(valTag, track, dayLabel);
     return column;
   }));
 }
@@ -795,10 +993,29 @@ function renderExpenses(items, params) {
     const row = document.createElement('tr');
     row.setAttribute('role', 'row');
     cell(row, item.NoiDungChi, { secondary: [item.MaKhoanChi, item.MaChungTu].filter(Boolean).join(' · ') });
-    cell(row, item.TenHoatDong, { secondary: `${item.MaHoatDong} · ${item.MaChienDich}` });
+    const actCell = cell(row, cleanActivityName(item.TenHoatDong));
+    const chipsRow = document.createElement('span');
+    chipsRow.className = 'meta-chips';
+    const actChip = document.createElement('span');
+    actChip.className = 'code-chip';
+    actChip.textContent = item.MaHoatDong;
+    const campChip = document.createElement('span');
+    campChip.className = 'code-chip subtle';
+    campChip.textContent = item.MaChienDich;
+    chipsRow.append(actChip, campChip);
+    actCell.append(chipsRow);
     cell(row, day(item.NgayPhatSinh), { label: 'Ngày phát sinh' });
     cell(row, currency(item.SoTien), { className: 'number', label: 'Số tiền' });
-    cell(row, item.MaNguoiGhiNhan, { label: 'Người ghi' });
+    const actorTd = cell(row, '', { label: 'Người ghi' });
+    const actorPill = document.createElement('span');
+    actorPill.className = 'actor-pill';
+    const actorDot = document.createElement('span');
+    actorDot.className = 'actor-dot';
+    actorDot.textContent = item.MaNguoiGhiNhan.slice(-2);
+    const actorCode = document.createElement('span');
+    actorCode.textContent = item.MaNguoiGhiNhan;
+    actorPill.append(actorDot, actorCode);
+    actorTd.append(actorPill);
     const actions = cell(row, '', { className: 'right' });
     const activity = catalog.activities.find(a => a.MaHoatDong === item.MaHoatDong);
     const permitted = item.MaNguoiGhiNhan === catalog.actor && canWrite(activity);
@@ -836,21 +1053,67 @@ function renderExpenses(items, params) {
   const end = day(params.get('to'));
   $('list-period').textContent = start === end ? start : `${start} – ${end}`;
 
-  // Live Hero Insight Pills (Average & Peak Day)
+  // Live Hero Insight Strip + Stacked Allocation Bar by Campaign/Activity
   const pills = $('hero-pills');
-  if (items.length > 0) {
+  const allocWrap = $('alloc-wrap');
+  if (items.length > 0 && total > 0n) {
     pills.hidden = false;
     const avg = total / BigInt(items.length);
     const peak = [...dailySpend.values()].reduce((m, v) => (v > m ? v : m), 0n);
+    const topItem = items.reduce((best, it) => !best || BigInt(it.SoTien) > BigInt(best.SoTien) ? it : best, null);
+    const topShare = topItem ? Number((BigInt(topItem.SoTien) * 1000n) / total) / 10 : 0;
     $('list-avg').textContent = compactCurrency(avg);
     $('list-peak').textContent = compactCurrency(peak);
+    $('list-top-share').textContent = `${decimalNum.format(topShare)}%`;
+
+    // Group spend by Campaign (or by Activity if single campaign selected)
+    const singleCampaign = Boolean(params.get('campaign'));
+    const buckets = new Map();
+    for (const it of items) {
+      const key = singleCampaign ? it.MaHoatDong : it.MaChienDich;
+      buckets.set(key, (buckets.get(key) ?? 0n) + BigInt(it.SoTien));
+    }
+    const sortedBuckets = [...buckets.entries()].sort((a, b) => (b[1] > a[1] ? 1 : b[1] < a[1] ? -1 : 0));
+    const shown = sortedBuckets.slice(0, 3);
+    if (sortedBuckets.length > 3) {
+      const rest = sortedBuckets.slice(3).reduce((s, [, v]) => s + v, 0n);
+      shown.push(['Khác', rest]);
+    }
+    allocWrap.hidden = shown.length < 2;
+    if (shown.length >= 2) {
+      const segColors = chartPalette();
+      $('alloc-bar').replaceChildren(...shown.map(([label, val], idx) => {
+        const w = Math.max(4, Number((val * 1000n) / total) / 10);
+        const seg = document.createElement('span');
+        seg.className = 'alloc-seg';
+        seg.style.setProperty('--seg-w', `${w.toFixed(1)}%`);
+        seg.style.setProperty('--seg-c', segColors[idx % segColors.length]);
+        seg.title = `${label}: ${currency(val)} (${Math.round(w)}%)`;
+        return seg;
+      }));
+      $('alloc-legend').replaceChildren(...shown.map(([label, val], idx) => {
+        const pct = Math.round(Number((val * 1000n) / total) / 10);
+        const itemEl = document.createElement('span');
+        itemEl.className = 'alloc-legend-item';
+        const dot = document.createElement('i');
+        dot.style.setProperty('--seg-c', segColors[idx % segColors.length]);
+        const txt = document.createElement('span');
+        txt.textContent = label;
+        const b = document.createElement('b');
+        b.textContent = `${pct}%`;
+        itemEl.append(dot, txt, b);
+        return itemEl;
+      }));
+    }
   } else {
     pills.hidden = true;
+    allocWrap.hidden = true;
   }
 
   animateNumber($('list-count'), items.length, (v) => num.format(Math.round(v)), { duration: 480 });
   animateNumber($('list-activities'), new Set(items.map(item => item.MaHoatDong)).size, (v) => num.format(Math.round(v)), { duration: 480 });
   $('table-count').textContent = `${items.length} khoản chi`;
+  pulseElement($('table-count'));
   $('expense-empty').textContent = 'Không có khoản chi khớp bộ lọc.';
   $('expense-state').hidden = items.length > 0;
   renderActiveChips();
@@ -863,8 +1126,9 @@ function renderFocus(items) {
   const top = items.reduce((best, item) => !best || BigInt(item.SoTien) > BigInt(best.SoTien) ? item : best, null);
   $('focus-card').hidden = !top || items.length < 2;
   if (!top) return;
-  animateNumber($('focus-amount'), BigInt(top.SoTien), (v) => currency(v), { duration: 560, isBigInt: true });
-  $('focus-text').textContent = `${top.NoiDungChi} · ${top.MaKhoanChi}`;
+  $('focus-code').textContent = top.MaKhoanChi;
+  animateNumber($('focus-amount'), BigInt(top.SoTien), (v) => currency(v), { duration: 420, isBigInt: true });
+  $('focus-text').textContent = `${top.NoiDungChi} · ${cleanActivityName(top.TenHoatDong)}`;
 }
 
 async function loadExpenses() {
@@ -994,8 +1258,7 @@ function renderRankedExpenses(items, params) {
 
   donutStage.hidden = false;
   delete donutStage.dataset.activeIdx;
-  const dark = document.documentElement.dataset.theme === 'dark';
-  const palette = dark ? DONUT_COLORS : DONUT_COLORS_LIGHT;
+  const palette = chartPalette();
 
   const ns = 'http://www.w3.org/2000/svg';
   const radius = 70;
@@ -1018,13 +1281,24 @@ function renderRankedExpenses(items, params) {
   const segments = [];
   const rows = [];
 
+  function swapDonutCenter(valText, lblText) {
+    if (donutVal.textContent === valText && donutLabel.textContent === lblText) return;
+    donutVal.textContent = valText;
+    donutLabel.textContent = lblText;
+    if (motionAllowed()) {
+      donutVal.parentElement?.animate?.(
+        [{ opacity: .35, transform: 'translateY(4px) scale(.96)' }, { opacity: 1, transform: 'none' }],
+        { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+      );
+    }
+  }
+
   function setHighlight(idx) {
     if (idx === null || idx === undefined) {
       delete donutStage.dataset.activeIdx;
       segments.forEach(s => { delete s.dataset.active; });
       rows.forEach(r => { delete r.dataset.active; });
-      donutVal.textContent = defaultValText;
-      donutLabel.textContent = defaultLabelText;
+      swapDonutCenter(defaultValText, defaultLabelText);
       return;
     }
     donutStage.dataset.activeIdx = String(idx);
@@ -1032,8 +1306,7 @@ function renderRankedExpenses(items, params) {
     rows.forEach((r, i) => { r.dataset.active = String(i === idx); });
     const item = top[idx];
     const sharePct = Math.round(Number((BigInt(item.TongChiTrongKy) * 1000n) / total) / 10);
-    donutVal.textContent = `${sharePct}%`;
-    donutLabel.textContent = item.MaHoatDong;
+    swapDonutCenter(`${sharePct}%`, item.MaHoatDong);
   }
 
   top.forEach((item, idx) => {
@@ -1067,14 +1340,18 @@ function renderRankedExpenses(items, params) {
 
     const nameWrap = document.createElement('span');
     nameWrap.className = 'ranked-name-wrap';
+    const rankEl = document.createElement('span');
+    rankEl.className = 'ranked-rank';
+    rankEl.style.setProperty('--seg-color', color);
+    rankEl.textContent = `#${idx + 1}`;
     const swatch = document.createElement('span');
-    swatch.className = 'ranked-swatch';
-    swatch.style.setProperty('--seg-color', color);
+    swatch.className = 'code-chip';
+    swatch.textContent = item.MaHoatDong;
     const name = document.createElement('span');
     name.className = 'ranked-name';
-    name.textContent = `${item.MaHoatDong} · ${item.TenHoatDong}`;
-    name.title = name.textContent;
-    nameWrap.append(swatch, name);
+    name.textContent = cleanActivityName(item.TenHoatDong);
+    name.title = `${item.MaHoatDong} · ${cleanActivityName(item.TenHoatDong)}`;
+    nameWrap.append(rankEl, swatch, name);
 
     const share = document.createElement('span');
     share.className = 'ranked-share';
@@ -1137,7 +1414,14 @@ async function loadReports() {
     for (const item of report.value.rows) {
       const row = document.createElement('tr');
       row.setAttribute('role', 'row');
-      cell(row, item.TenHoatDong, { secondary: item.MaHoatDong });
+      const repActCell = cell(row, cleanActivityName(item.TenHoatDong));
+      const repChips = document.createElement('span');
+      repChips.className = 'meta-chips';
+      const repChip = document.createElement('span');
+      repChip.className = 'code-chip';
+      repChip.textContent = item.MaHoatDong;
+      repChips.append(repChip);
+      repActCell.append(repChips);
       cell(row, item.TenChienDich, { secondary: item.MaChienDich });
       cell(row, item.SoKhoanChiTrongKy, { className: 'number', label: 'Số khoản chi' });
       cell(row, currency(item.TongChiTrongKy), { className: 'number', label: 'Tổng chi trong kỳ' });
@@ -1147,6 +1431,7 @@ async function loadReports() {
     tbody.replaceChildren(fragment);
     staggerChildren(tbody, 'tr', 14);
     $('report-count').textContent = `${report.value.rows.length} hoạt động`;
+    pulseElement($('report-count'));
     $('report-state').hidden = report.value.rows.length > 0;
     $('report-empty').textContent = 'Không có hoạt động đạt ngưỡng tổng chi trong kỳ.';
   } else {
@@ -1162,26 +1447,43 @@ async function loadReports() {
     $('report-empty').textContent = report.reason.message;
   }
   if (metrics.status === 'fulfilled') {
-    animateNumber($('report-overspent'), Number(metrics.value.overspent), (v) => num.format(Math.round(v)), { duration: 480 });
+    const overspentCount = Number(metrics.value.overspent);
+    animateNumber($('report-overspent'), overspentCount, (v) => num.format(Math.round(v)), { duration: 480 });
+    const campActivities = catalog.activities.filter(a => a.MaChienDich === params.get('campaign')).length || 1;
+    const ratio = Math.min(1, Math.max(0, overspentCount / campActivities));
+    const card = $('overspent-card');
+    card.dataset.alert = overspentCount > 0 ? 'warn' : 'ok';
+    $('overspent-badge').textContent = overspentCount > 0 ? 'Cần kiểm soát' : 'Trong hạn mức';
+    $('overspent-ratio').textContent = `${overspentCount}/${campActivities}`;
+    $('overspent-arc').style.setProperty('--gauge-offset', `${(226.2 * (1 - ratio)).toFixed(1)}`);
+
+    const actId = params.get('activity');
+    const actObj = catalog.activities.find(a => a.MaHoatDong === actId);
+    $('cpa-activity-pill').textContent = actObj ? `${actObj.MaHoatDong} · ${cleanActivityName(actObj.TenHoatDong)}` : 'Chưa chọn hoạt động';
+
     const cpa = metrics.value.cpa;
     if (cpa === null) {
       animateNumber($('report-cpa'), null, () => '—');
     } else {
       const numericCpa = Number(cpa);
       if (Number.isFinite(numericCpa) && numericCpa < 1e15) {
-        animateNumber($('report-cpa'), numericCpa, (v) => `${decimalNum.format(v)} ₫`, { duration: 600 });
+        animateNumber($('report-cpa'), numericCpa, (v) => `${decimalNum.format(v)} ₫`, { duration: 540 });
         setTimeout(() => {
-          if ($('report-cpa').dataset.numCurrent === String(numericCpa)) $('report-cpa').textContent = currency(cpa);
-        }, 620);
+          if ($('report-cpa').dataset.numCurrent === String(numericCpa)) renderSplitCurrency($('report-cpa'), cpa);
+        }, 560);
       } else {
-        $('report-cpa').textContent = currency(cpa);
+        renderSplitCurrency($('report-cpa'), cpa);
       }
     }
-    $('cpa-note').textContent = !params.get('activity') ? 'Chọn một hoạt động để tính CPA.' :
+    $('cpa-note').textContent = !actId ? 'Chọn một hoạt động để tính CPA.' :
       cpa === null ? 'Thiếu dữ liệu ngày hoặc tổng chuyển đổi bằng 0.' : 'VND cho mỗi lượt chuyển đổi';
   } else {
     animateNumber($('report-overspent'), null, () => '—');
+    $('overspent-badge').textContent = 'Không có dữ liệu';
+    $('overspent-ratio').textContent = '—';
+    $('overspent-arc').style.setProperty('--gauge-offset', '226.2');
     animateNumber($('report-cpa'), null, () => '—');
+    $('cpa-activity-pill').textContent = '—';
     $('cpa-note').textContent = metrics.reason.message;
   }
   setReportBusy(false);
@@ -1213,14 +1515,33 @@ function showPage(active = pageFromHash()) {
     const selected = link.dataset.page === active;
     if (selected) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
-    $(link.dataset.page).hidden = !selected;
+    const sec = $(link.dataset.page);
+    sec.hidden = !selected;
+    if (selected) {
+      sec.querySelectorAll('.panel').forEach(p => { p.dataset.inView = 'true'; });
+      revealWords(sec.querySelector('h1'));
+    }
   }
   if (active === 'bao-cao') void loadReports();
   else requestAnimationFrame(() => quickSort.sync());
 }
 
 function transitionToPage() {
-  if (pageFromHash() === activePage) return;
+  const nextPage = pageFromHash();
+  if (nextPage === activePage) return;
+  const dir = nextPage === 'bao-cao' ? 'forward' : 'backward';
+  const root = document.documentElement;
+  root.dataset.navDir = dir;
+
+  // Trigger elastic liquid stretch on the sidebar nav pill
+  const nav = document.querySelector('nav');
+  if (nav && motionAllowed()) {
+    delete nav.dataset.switching;
+    void nav.offsetWidth;
+    nav.dataset.switching = 'true';
+    setTimeout(() => { delete nav.dataset.switching; }, 420);
+  }
+
   pageTransition?.skipTransition();
   const update = () => {
     showPage();
@@ -1229,14 +1550,14 @@ function transitionToPage() {
   if (reducedMotion.matches || !document.startViewTransition) {
     update();
     if (!reducedMotion.matches) {
+      const yFrom = dir === 'forward' ? '26px' : '-26px';
       $(activePage).animate?.(
-        [{ opacity: 0, transform: 'translateY(12px)', filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
-        { duration: 280, easing: 'cubic-bezier(.22, 1, .36, 1)' },
+        [{ opacity: 0, transform: `perspective(1200px) translate3d(0, ${yFrom}, 0) scale(1.015)` }, { opacity: 1, transform: 'none' }],
+        { duration: 640, easing: 'cubic-bezier(.16, 1, .3, 1)' },
       );
     }
     return;
   }
-  const root = document.documentElement;
   root.dataset.pageTransition = '';
   const transition = document.startViewTransition(update);
   pageTransition = transition;
@@ -1266,8 +1587,30 @@ $('list-campaign').addEventListener('change', () => {
   syncListActivity();
   $('campaign-switch').value = $('list-campaign').value;
   campaignSwitcher.sync();
+  void loadExpenses();
 });
-$('report-campaign').addEventListener('change', () => { if (catalog) syncReportActivity(); });
+$('list-activity').addEventListener('change', () => { if (catalog) void loadExpenses(); });
+filters.elements.from.addEventListener('change', () => { if (catalog && filters.elements.from.value && filters.elements.to.value && filters.elements.from.value <= filters.elements.to.value) void loadExpenses(); });
+filters.elements.to.addEventListener('change', () => { if (catalog && filters.elements.from.value && filters.elements.to.value && filters.elements.from.value <= filters.elements.to.value) void loadExpenses(); });
+filters.elements.sort.addEventListener('change', () => { if (catalog) void loadExpenses(); });
+
+let searchDebounce;
+filters.elements.q.addEventListener('input', () => {
+  if (!catalog) return;
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => void loadExpenses(), 180);
+});
+
+$('report-campaign').addEventListener('change', () => { if (catalog) { syncReportActivity(); void loadReports(); } });
+$('report-activity').addEventListener('change', () => { if (catalog) void loadReports(); });
+reportFilters.elements.from.addEventListener('change', () => { if (catalog && reportFilters.elements.from.value <= reportFilters.elements.to.value) void loadReports(); });
+reportFilters.elements.to.addEventListener('change', () => { if (catalog && reportFilters.elements.from.value <= reportFilters.elements.to.value) void loadReports(); });
+let minDebounce;
+reportFilters.elements.min.addEventListener('input', () => {
+  if (!catalog || !/^\d+$/.test(reportFilters.elements.min.value.trim())) return;
+  clearTimeout(minDebounce);
+  minDebounce = setTimeout(() => void loadReports(), 220);
+});
 reportFilters.addEventListener('submit', event => {
   event.preventDefault(); dismissBanner(); void loadReports();
 });
@@ -1335,6 +1678,10 @@ const openPalette = setupPalette(() => [
     document.querySelector(`[data-chart-mode="${next}"]`)?.click();
   } },
   { label: 'Đổi giao diện sáng / tối', hint: 'Giao diện', icon: 'sun', run: () => $('theme-toggle').click() },
+  { label: 'Tông màu: Sapphire Đêm · Lam Ngọc', hint: 'Bảng màu', icon: 'sparkles', run: () => document.querySelector('#accent-picker [data-swatch="sapphire"]')?.click() },
+  { label: 'Tông màu: Xanh Rừng · Xanh Chanh', hint: 'Bảng màu', icon: 'sparkles', run: () => document.querySelector('#accent-picker [data-swatch="emerald"]')?.click() },
+  { label: 'Tông màu: Tím Đêm · Vàng Champagne', hint: 'Bảng màu', icon: 'sparkles', run: () => document.querySelector('#accent-picker [data-swatch="amethyst"]')?.click() },
+  { label: 'Tông màu: Xám Băng · Cam Hổ Phách', hint: 'Bảng màu', icon: 'sparkles', run: () => document.querySelector('#accent-picker [data-swatch="amber"]')?.click() },
   { label: 'Thu gọn / mở thanh điều hướng', hint: 'Bố cục · Ctrl+B', icon: 'panel-left-close', run: () => $('sidebar-toggle').click() },
   ...(catalog?.campaigns ?? []).map(c => ({
     label: `${c.MaChienDich} · ${c.TenChienDich}`,
@@ -1359,6 +1706,7 @@ const openPalette = setupPalette(() => [
   },
 }));
 $('palette-open').addEventListener('click', openPalette);
+$('rail-palette-btn')?.addEventListener('click', openPalette);
 
 $('focus-open').addEventListener('click', () => {
   burstFromElement($('focus-open'), { count: 22, spread: 5.5 });
@@ -1404,6 +1752,12 @@ document.addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b' && !event.shiftKey && !event.altKey) {
     event.preventDefault();
     $('sidebar-toggle').click();
+    return;
+  }
+  const tag = event.target?.tagName;
+  if (!event.ctrlKey && !event.metaKey && !event.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) && !document.querySelector('dialog[open]')) {
+    if (event.key === '1') goTo('khoan-chi');
+    else if (event.key === '2') goTo('bao-cao');
   }
 });
 
@@ -1411,6 +1765,8 @@ try {
   catalog = await api('/api/catalog');
   $('operator').textContent = catalog.actor;
   $('operator-badge').title = `Nhân viên ${catalog.actor}`;
+  $('rail-campaigns').textContent = num.format(catalog.campaigns.length);
+  $('rail-activities').textContent = num.format(catalog.activities.length);
   const campaigns = () => catalog.campaigns.map(c => option(c.MaChienDich, `${c.MaChienDich} · ${c.TenChienDich}`));
   replaceOptions($('list-campaign'), campaigns(), 'Tất cả chiến dịch');
   replaceOptions($('report-campaign'), campaigns());

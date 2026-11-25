@@ -1,4 +1,8 @@
-// Hệ thống chuyển động và vi tương tác (Spotlight kính mờ, 3D micro-tilt, số cuộn, ripple, tooltip nổi, chuyển theme tròn).
+// Hệ thống chuyển động Liquid Glass 60-120fps (Zero Layout Thrashing):
+// - Cache bounding rect trên pointerover (không gọi getBoundingClientRect mỗi frame)
+// - Nội suy quán tính mượt cho spotlight & 3D micro-tilt, tự dừng rAF khi con trỏ nghỉ
+// - Word-by-word silk reveal, sliding table hover rail, magnetic buttons, ripples, smooth counters, circular theme reveal
+
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
 
@@ -6,12 +10,37 @@ export function motionAllowed() {
   return !reducedMotion.matches;
 }
 
+export function revealWords(element, { delayOffset = 0 } = {}) {
+  if (!element || !motionAllowed()) return;
+  const raw = element.dataset.wordSource ?? element.textContent?.trim();
+  if (!raw) return;
+  element.dataset.wordSource = raw;
+  const words = raw.split(/\s+/);
+  element.replaceChildren();
+  words.forEach((word, i) => {
+    const span = document.createElement('span');
+    span.className = 'word-reveal';
+    span.style.setProperty('--word-i', String(i + delayOffset));
+    span.textContent = word;
+    element.append(span);
+    if (i < words.length - 1) element.append(' ');
+  });
+}
+
 export function setupInteractiveGlow() {
-  let activePointerEvent = null;
+  const root = document.documentElement;
   let rafId = 0;
   let hoveredTilt = null;
+  let hoveredTiltRect = null;
   let hoveredSpotlight = null;
-  const root = document.documentElement;
+  let hoveredSpotlightRect = null;
+  let parallaxNodes = null;
+
+  let targetX = window.innerWidth * 0.5;
+  let targetY = window.innerHeight * 0.5;
+  let curX = targetX;
+  let curY = targetY;
+  let pointerActive = false;
 
   function clearTilt(el) {
     if (!el) return;
@@ -20,94 +49,120 @@ export function setupInteractiveGlow() {
     el.dataset.tilting = 'false';
   }
 
-  function flushPointer() {
+  function invalidateRects() {
+    if (hoveredSpotlight) hoveredSpotlightRect = hoveredSpotlight.getBoundingClientRect();
+    if (hoveredTilt) hoveredTiltRect = hoveredTilt.getBoundingClientRect();
+  }
+
+  function tick() {
     rafId = 0;
-    const e = activePointerEvent;
-    if (!e || !motionAllowed() || !finePointer.matches) return;
+    if (!motionAllowed() || !finePointer.matches) return;
 
-    // Gentle viewport parallax coordinates (-0.5 .. 0.5)
-    const nx = (e.clientX / Math.max(window.innerWidth, 1)) - 0.5;
-    const ny = (e.clientY / Math.max(window.innerHeight, 1)) - 0.5;
-    root.style.setProperty('--px', nx.toFixed(4));
-    root.style.setProperty('--py', ny.toFixed(4));
+    curX += (targetX - curX) * 0.095;
+    curY += (targetY - curY) * 0.095;
 
-    // Parallax layers (e.g. login hero artwork)
-    const parallaxNodes = document.querySelectorAll('[data-parallax]');
-    for (const node of parallaxNodes) {
-      const depth = Number(node.dataset.parallax) || 12;
-      node.style.setProperty('--par-x', `${(nx * depth).toFixed(2)}px`);
-      node.style.setProperty('--par-y', `${(ny * depth).toFixed(2)}px`);
-    }
-
-    // Cursor-tracked glass spotlight & border refraction
-    const spotlight = e.target instanceof Element ? e.target.closest('[data-spotlight]') : null;
-    if (hoveredSpotlight && hoveredSpotlight !== spotlight) {
-      hoveredSpotlight.style.setProperty('--glow-o', '0');
-    }
-    hoveredSpotlight = spotlight;
-    if (spotlight) {
-      const rect = spotlight.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      spotlight.style.setProperty('--mx', `${x.toFixed(1)}px`);
-      spotlight.style.setProperty('--my', `${y.toFixed(1)}px`);
-      spotlight.style.setProperty('--glow-o', '1');
-    }
-
-    // Subtle 3D micro-tilt + studio glass glare angle on KPI cards & hero surfaces
-    const tilt = e.target instanceof Element ? e.target.closest('[data-tilt]') : null;
-    if (hoveredTilt && hoveredTilt !== tilt) clearTilt(hoveredTilt);
-    hoveredTilt = tilt;
-    if (tilt) {
-      const rect = tilt.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        const px = (e.clientX - rect.left) / rect.width - 0.5;
-        const py = (e.clientY - rect.top) / rect.height - 0.5;
-        const maxDeg = Number(tilt.dataset.tilt) || 2.4;
-        tilt.style.setProperty('--ry', `${(px * maxDeg * 2).toFixed(2)}deg`);
-        tilt.style.setProperty('--rx', `${(-py * maxDeg * 2).toFixed(2)}deg`);
-        tilt.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`);
-        tilt.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`);
-        tilt.dataset.tilting = 'true';
+    if (!parallaxNodes) parallaxNodes = [...document.querySelectorAll('[data-parallax]')];
+    if (parallaxNodes.length > 0) {
+      const nx = (curX / Math.max(window.innerWidth, 1)) - 0.5;
+      const ny = (curY / Math.max(window.innerHeight, 1)) - 0.5;
+      for (const node of parallaxNodes) {
+        const depth = Number(node.dataset.parallax) || 12;
+        node.style.setProperty('--par-x', `${(nx * depth).toFixed(1)}px`);
+        node.style.setProperty('--par-y', `${(ny * depth).toFixed(1)}px`);
       }
+    }
+
+    if (hoveredSpotlight && hoveredSpotlightRect) {
+      const x = curX - hoveredSpotlightRect.left;
+      const y = curY - hoveredSpotlightRect.top;
+      hoveredSpotlight.style.setProperty('--mx', `${x.toFixed(1)}px`);
+      hoveredSpotlight.style.setProperty('--my', `${y.toFixed(1)}px`);
+      hoveredSpotlight.style.setProperty('--glow-o', '1');
+    }
+
+    if (hoveredTilt && hoveredTiltRect && hoveredTiltRect.width > 0 && hoveredTiltRect.height > 0) {
+      const px = Math.max(-0.5, Math.min(0.5, (curX - hoveredTiltRect.left) / hoveredTiltRect.width - 0.5));
+      const py = Math.max(-0.5, Math.min(0.5, (curY - hoveredTiltRect.top) / hoveredTiltRect.height - 0.5));
+      const maxDeg = Number(hoveredTilt.dataset.tilt) || 2.0;
+      hoveredTilt.style.setProperty('--ry', `${(px * maxDeg * 1.85).toFixed(2)}deg`);
+      hoveredTilt.style.setProperty('--rx', `${(-py * maxDeg * 1.85).toFixed(2)}deg`);
+      hoveredTilt.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`);
+      hoveredTilt.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`);
+      hoveredTilt.dataset.tilting = 'true';
+    }
+
+    if (pointerActive && (Math.abs(targetX - curX) > 0.5 || Math.abs(targetY - curY) > 0.5)) {
+      rafId = requestAnimationFrame(tick);
     }
   }
 
   document.addEventListener('pointermove', (e) => {
-    activePointerEvent = e;
-    if (!rafId) rafId = requestAnimationFrame(flushPointer);
+    targetX = e.clientX;
+    targetY = e.clientY;
+    pointerActive = true;
+
+    const spotlight = e.target instanceof Element ? e.target.closest('[data-spotlight]') : null;
+    if (hoveredSpotlight !== spotlight) {
+      if (hoveredSpotlight) hoveredSpotlight.style.setProperty('--glow-o', '0');
+      hoveredSpotlight = spotlight;
+      hoveredSpotlightRect = spotlight ? spotlight.getBoundingClientRect() : null;
+    }
+
+    const tilt = e.target instanceof Element ? e.target.closest('[data-tilt]') : null;
+    if (hoveredTilt !== tilt) {
+      clearTilt(hoveredTilt);
+      hoveredTilt = tilt;
+      hoveredTiltRect = tilt ? tilt.getBoundingClientRect() : null;
+    }
+
+    if (!rafId) rafId = requestAnimationFrame(tick);
+  }, { passive: true });
+
+  window.addEventListener('scroll', invalidateRects, { passive: true });
+  window.addEventListener('resize', () => {
+    parallaxNodes = null;
+    invalidateRects();
   }, { passive: true });
 
   document.addEventListener('pointerleave', () => {
+    pointerActive = false;
     if (hoveredSpotlight) {
       hoveredSpotlight.style.setProperty('--glow-o', '0');
       hoveredSpotlight = null;
+      hoveredSpotlightRect = null;
     }
     clearTilt(hoveredTilt);
     hoveredTilt = null;
+    hoveredTiltRect = null;
   });
+
+  // Ensure root stays clean without unnecessary global custom property churn
+  root.style.removeProperty('--px');
+  root.style.removeProperty('--py');
 }
 
 export function setupMagneticButtons() {
   if (!finePointer.matches) return;
   let current = null;
+  let currentRect = null;
 
   document.addEventListener('pointermove', (e) => {
     if (!motionAllowed()) return;
     const btn = e.target instanceof Element ? e.target.closest('[data-magnetic]:not(:disabled)') : null;
-    if (current && current !== btn) {
-      current.style.setProperty('--mag-x', '0px');
-      current.style.setProperty('--mag-y', '0px');
-      current = null;
+    if (current !== btn) {
+      if (current) {
+        current.style.setProperty('--mag-x', '0px');
+        current.style.setProperty('--mag-y', '0px');
+      }
+      current = btn;
+      currentRect = btn ? btn.getBoundingClientRect() : null;
     }
-    if (!btn) return;
-    current = btn;
-    const rect = btn.getBoundingClientRect();
-    const strength = Number(btn.dataset.magnetic) || 4;
-    const dx = ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * strength;
-    const dy = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * strength;
-    btn.style.setProperty('--mag-x', `${dx.toFixed(2)}px`);
-    btn.style.setProperty('--mag-y', `${dy.toFixed(2)}px`);
+    if (!current || !currentRect || currentRect.width === 0) return;
+    const strength = Number(current.dataset.magnetic) || 3.2;
+    const dx = ((e.clientX - (currentRect.left + currentRect.width / 2)) / (currentRect.width / 2)) * strength;
+    const dy = ((e.clientY - (currentRect.top + currentRect.height / 2)) / (currentRect.height / 2)) * strength;
+    current.style.setProperty('--mag-x', `${dx.toFixed(1)}px`);
+    current.style.setProperty('--mag-y', `${dy.toFixed(1)}px`);
   }, { passive: true });
 
   document.addEventListener('pointerout', (e) => {
@@ -116,6 +171,7 @@ export function setupMagneticButtons() {
       current.style.setProperty('--mag-x', '0px');
       current.style.setProperty('--mag-y', '0px');
       current = null;
+      currentRect = null;
     }
   });
 }
@@ -124,11 +180,18 @@ export function setupButtonRipples() {
   document.addEventListener('pointerdown', (e) => {
     if (!motionAllowed() || e.button !== 0) return;
     const target = e.target instanceof Element
-      ? e.target.closest('button:not(:disabled), nav a, .campaign-option')
+      ? e.target.closest('button:not(:disabled), nav a, .campaign-option, #expense-rows tr:not(.skeleton-row)')
       : null;
     if (!target) return;
+    if (target.tagName === 'TR') {
+      target.animate?.(
+        [{ transform: 'scale(1)' }, { transform: 'scale(.993)' }, { transform: 'scale(1)' }],
+        { duration: 280, easing: 'cubic-bezier(.16, 1, .3, 1)' },
+      );
+      return;
+    }
     const rect = target.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 1.9;
+    const size = Math.max(rect.width, rect.height) * 2.1;
     const wave = document.createElement('span');
     wave.className = 'ripple-wave';
     wave.style.setProperty('--rx', `${(e.clientX - rect.left).toFixed(1)}px`);
@@ -136,20 +199,25 @@ export function setupButtonRipples() {
     wave.style.setProperty('--rs', `${size.toFixed(1)}px`);
     target.append(wave);
     wave.addEventListener('animationend', () => wave.remove(), { once: true });
-    setTimeout(() => wave.remove(), 700);
+    setTimeout(() => wave.remove(), 760);
   }, { passive: true });
 }
 
 export function setupScrollContext() {
   const root = document.documentElement;
   let ticking = false;
+  let lastScrolled = '';
   function update() {
     ticking = false;
     const y = window.scrollY;
-    root.dataset.scrolled = y > 10 ? 'true' : 'false';
+    const nextScrolled = y > 10 ? 'true' : 'false';
+    if (nextScrolled !== lastScrolled) {
+      lastScrolled = nextScrolled;
+      root.dataset.scrolled = nextScrolled;
+    }
     const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
     const pct = Math.min(1, Math.max(0, y / max));
-    root.style.setProperty('--scroll-progress', pct.toFixed(4));
+    root.style.setProperty('--scroll-progress', pct.toFixed(3));
   }
   window.addEventListener('scroll', () => {
     if (!ticking) {
@@ -173,12 +241,10 @@ export function setupNavHoverPill(nav) {
       ghost.dataset.visible = 'false';
       return;
     }
-    const navRect = nav.getBoundingClientRect();
-    const rect = link.getBoundingClientRect();
-    ghost.style.setProperty('--gx', `${(rect.left - navRect.left).toFixed(1)}px`);
-    ghost.style.setProperty('--gy', `${(rect.top - navRect.top).toFixed(1)}px`);
-    ghost.style.setProperty('--gw', `${rect.width.toFixed(1)}px`);
-    ghost.style.setProperty('--gh', `${rect.height.toFixed(1)}px`);
+    ghost.style.setProperty('--gx', `${link.offsetLeft}px`);
+    ghost.style.setProperty('--gy', `${link.offsetTop}px`);
+    ghost.style.setProperty('--gw', `${link.offsetWidth}px`);
+    ghost.style.setProperty('--gh', `${link.offsetHeight}px`);
     ghost.dataset.visible = 'true';
   }
 
@@ -189,10 +255,62 @@ export function setupNavHoverPill(nav) {
   nav.addEventListener('pointerleave', () => moveTo(null));
 }
 
-// Smooth number rolling animation supporting BigInt, integers, and decimal numbers.
+export function setupSlidingTableRails() {
+  if (!finePointer.matches) return;
+  for (const scrollBox of document.querySelectorAll('.table-scroll')) {
+    if (scrollBox.querySelector('.table-hover-rail')) continue;
+    const rail = document.createElement('span');
+    rail.className = 'table-hover-rail';
+    rail.setAttribute('aria-hidden', 'true');
+    scrollBox.prepend(rail);
+
+    let activeRow = null;
+    function syncRail(row) {
+      if (!row || !motionAllowed() || window.innerWidth <= 640) {
+        rail.dataset.visible = 'false';
+        activeRow = null;
+        return;
+      }
+      activeRow = row;
+      const boxRect = scrollBox.getBoundingClientRect();
+      const rowRect = row.getBoundingClientRect();
+      const top = rowRect.top - boxRect.top + scrollBox.scrollTop;
+      rail.style.setProperty('--ry', `${top.toFixed(1)}px`);
+      rail.style.setProperty('--rh', `${rowRect.height.toFixed(1)}px`);
+      rail.dataset.visible = 'true';
+    }
+
+    scrollBox.addEventListener('pointerover', (e) => {
+      const row = e.target instanceof Element ? e.target.closest('tbody tr:not(.skeleton-row)') : null;
+      if (row && row !== activeRow) syncRail(row);
+      else if (!row && activeRow) syncRail(null);
+    });
+    scrollBox.addEventListener('pointerleave', () => syncRail(null));
+  }
+}
+
+export function setupScrollReveal() {
+  if (!motionAllowed() || !('IntersectionObserver' in window)) return;
+  const targets = document.querySelectorAll('.panel, .stat');
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.dataset.inView = 'true';
+        observer.unobserve(entry.target);
+      }
+    }
+  }, { rootMargin: '0px 0px -24px 0px', threshold: 0.04 });
+
+  targets.forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.96) el.dataset.inView = 'true';
+    else observer.observe(el);
+  });
+}
+
 const activeCounters = new WeakMap();
 
-export function animateNumber(element, target, formatter, { duration = 580, isBigInt = false } = {}) {
+export function animateNumber(element, target, formatter, { duration = 960, isBigInt = false } = {}) {
   if (!element) return;
   const prevRaf = activeCounters.get(element);
   if (prevRaf) cancelAnimationFrame(prevRaf);
@@ -211,6 +329,7 @@ export function animateNumber(element, target, formatter, { duration = 580, isBi
 
   const startTime = performance.now();
   const hasPrev = element.dataset.numCurrent !== undefined;
+  const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
   if (isBigInt) {
     const endVal = BigInt(target);
@@ -222,9 +341,7 @@ export function animateNumber(element, target, formatter, { duration = 580, isBi
     const delta = endVal - startVal;
     const step = (now) => {
       const t = Math.min(1, (now - startTime) / duration);
-      // Cubic ease-out with ultra-smooth tail
-      const eased = 1 - Math.pow(1 - t, 3);
-      const scale = BigInt(Math.round(eased * 10000));
+      const scale = BigInt(Math.round(easeOutQuart(t) * 10000));
       const current = startVal + (delta * scale) / 10000n;
       element.textContent = formatter(t < 1 ? current : endVal);
       if (t < 1) {
@@ -248,8 +365,7 @@ export function animateNumber(element, target, formatter, { duration = 580, isBi
   const delta = endNum - startNum;
   const step = (now) => {
     const t = Math.min(1, (now - startTime) / duration);
-    const eased = 1 - Math.pow(1 - t, 3);
-    const current = startNum + delta * eased;
+    const current = startNum + delta * easeOutQuart(t);
     element.textContent = formatter(t < 1 ? current : endNum);
     if (t < 1) {
       activeCounters.set(element, requestAnimationFrame(step));
@@ -266,12 +382,11 @@ export function pulseElement(el) {
   if (!el || !motionAllowed()) return;
   el.animate?.([
     { transform: 'scale(1)' },
-    { transform: 'scale(1.03)' },
+    { transform: 'scale(1.028)' },
     { transform: 'scale(1)' },
-  ], { duration: 280, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+  ], { duration: 420, easing: 'cubic-bezier(.16, 1, .3, 1)' });
 }
 
-// Circular View Transition reveal expanding right out of the theme button.
 export function transitionTheme(triggerEl, applyThemeFn) {
   if (!motionAllowed() || !document.startViewTransition || !triggerEl) {
     applyThemeFn();
@@ -298,8 +413,8 @@ export function transitionTheme(triggerEl, applyThemeFn) {
         ],
       },
       {
-        duration: 520,
-        easing: 'cubic-bezier(.22, 1, .36, 1)',
+        duration: 860,
+        easing: 'cubic-bezier(.16, 1, .3, 1)',
         pseudoElement: '::view-transition-new(root)',
       },
     );
@@ -308,7 +423,6 @@ export function transitionTheme(triggerEl, applyThemeFn) {
   transition.finished.then(clear, clear);
 }
 
-// Floating frosted-glass tooltip singleton (used for compact dock icons & chart bars).
 let tooltipEl = null;
 
 function ensureTooltip() {
@@ -383,7 +497,7 @@ export function setupCompactDockTooltips() {
   window.addEventListener('scroll', hideTooltip, { passive: true });
 }
 
-export function staggerChildren(container, selector = ':scope > *', maxStagger = 14) {
+export function staggerChildren(container, selector = ':scope > *', maxStagger = 16) {
   if (!container) return;
   const items = container.querySelectorAll(selector);
   items.forEach((node, idx) => {
@@ -395,12 +509,12 @@ export function shakeElement(el) {
   if (!el || !motionAllowed()) return;
   el.animate?.([
     { transform: 'translateX(0)' },
-    { transform: 'translateX(-6px)' },
-    { transform: 'translateX(5px)' },
-    { transform: 'translateX(-4px)' },
-    { transform: 'translateX(2px)' },
+    { transform: 'translateX(-5px)' },
+    { transform: 'translateX(4px)' },
+    { transform: 'translateX(-3px)' },
+    { transform: 'translateX(1.5px)' },
     { transform: 'translateX(0)' },
-  ], { duration: 360, easing: 'cubic-bezier(.36, .07, .19, .97)' });
+  ], { duration: 400, easing: 'cubic-bezier(.22, .61, .36, 1)' });
 }
 
 export function initMotion({ navSelector = 'nav' } = {}) {
@@ -409,6 +523,8 @@ export function initMotion({ navSelector = 'nav' } = {}) {
   setupButtonRipples();
   setupScrollContext();
   setupCompactDockTooltips();
+  setupSlidingTableRails();
+  setupScrollReveal();
   const nav = navSelector ? document.querySelector(navSelector) : null;
   if (nav) setupNavHoverPill(nav);
 }

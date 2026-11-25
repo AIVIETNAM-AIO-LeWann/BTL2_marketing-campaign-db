@@ -15,52 +15,179 @@
     <span class="ambient-orb orb-1"></span>
     <span class="ambient-orb orb-2"></span>
     <span class="ambient-orb orb-3"></span>
+    <span class="ambient-orb orb-4"></span>
   </div>
-  <div class="login-controls">
-    <button id="login-theme-toggle" class="icon-button login-control-btn" type="button" data-magnetic="2.5" aria-label="Chuyển giao diện sáng/tối" aria-pressed="false" title="Chuyển giao diện sáng/tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
-    <button class="icon-button login-control-btn" type="button" data-ambient-toggle data-magnetic="2.5" aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
-  </div>
-  <main class="login-layout">
-    <aside class="login-intro" aria-label="Giới thiệu Campaign Desk" data-spotlight data-beam>
-      <div class="login-brand"><span class="brand-icon" data-magnetic="3"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><span><strong>Campaign Desk</strong><small class="login-brand-sub"><span class="live-dot" aria-hidden="true"></span>Marketing đa kênh</small></span></div>
-      <div class="login-art" aria-hidden="true">
-        <div class="art-rings" data-parallax="-12"><span class="art-orbit"></span></div>
-        <div class="art-bars" data-parallax="10"><i></i><i></i><i></i><i></i><i></i></div>
-        <span class="art-chip art-chip-receipt" data-parallax="24"><svg><use href="/icons.svg#receipt-text"/></svg></span>
-        <span class="art-chip art-chip-target" data-parallax="-20"><svg><use href="/icons.svg#target"/></svg></span>
-        <div class="art-pill" data-parallax="18"><svg><use href="/icons.svg#trending-up"/></svg><span>Thực chi &amp; CPA thời gian thực</span></div>
-      </div>
-      <div class="login-intro-copy">
-        <p class="login-product">Phân tích ngân sách &amp; hiệu quả</p>
-        <p class="login-headline">Quản lý chi phí chiến dịch</p>
-        <p>Theo dõi khoản chi, ngân sách và chi phí chuyển đổi trong cùng một bảng điều khiển.</p>
-      </div>
-    </aside>
+  <div class="login-grid-bg" aria-hidden="true"></div>
 
-    <section class="login-side" aria-labelledby="login-title">
-      <div class="login-brand mobile-brand"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><strong>Campaign Desk</strong></div>
-      <div class="login-card" data-spotlight data-tilt="1.5">
-        <div class="login-sign" aria-hidden="true"><svg><use href="/icons.svg#lock-keyhole"/></svg></div>
-        <h1 id="login-title">Đăng nhập</h1>
-        <p class="login-copy">Sử dụng tài khoản demo do nhóm cung cấp.</p>
-        <form id="login-form" action="/api/login" method="post">
-          <label for="username">Tên đăng nhập</label>
-          <div class="login-field">
-            <svg aria-hidden="true"><use href="/icons.svg#user-round"/></svg>
-            <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tên tài khoản" maxlength="64" required>
-          </div>
-          <label for="password">Mật khẩu</label>
-          <div class="login-field password-field">
-            <svg aria-hidden="true"><use href="/icons.svg#lock-keyhole"/></svg>
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" maxlength="1024" required>
-            <button class="password-toggle" id="password-toggle" type="button" aria-label="Hiện mật khẩu" aria-controls="password" title="Hiện mật khẩu"><svg aria-hidden="true"><use href="/icons.svg#eye"/></svg></button>
-          </div>
-          <p id="login-error" class="form-error" role="alert" hidden></p>
-          <button id="login-submit" class="primary login-submit" type="submit" data-magnetic="3.5" data-beam>Đăng nhập</button>
-          <noscript><p class="login-copy">Bật JavaScript trong trình duyệt để đăng nhập.</p></noscript>
-        </form>
+  <div class="login-shell">
+    <header class="login-nav">
+      <div class="login-brand">
+        <span class="brand-icon" data-magnetic="3"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span>
+        <span><strong>Campaign Desk</strong><small class="login-brand-sub"><span class="live-dot" aria-hidden="true"></span>Marketing đa kênh</small></span>
       </div>
-    </section>
-  </main>
+      <div class="nav-center-pill" aria-hidden="true">
+        <span class="live-dot"></span>
+        <span>Hệ thống trực tuyến · MySQL 8.4</span>
+      </div>
+      <div class="login-controls">
+        <div class="accent-picker" id="login-accent-picker" role="group" aria-label="Chọn tông màu">
+          <button type="button" class="accent-dot" data-swatch="amber" aria-pressed="true" aria-label="Xám Băng Hổ Phách" title="Xám Băng · Cam Hổ Phách"></button>
+          <button type="button" class="accent-dot" data-swatch="emerald" aria-pressed="false" aria-label="Xanh Rừng Sylva" title="Xanh Rừng · Xanh Chanh"></button>
+          <button type="button" class="accent-dot" data-swatch="amethyst" aria-pressed="false" aria-label="Tím Đêm Champagne" title="Tím Đêm · Vàng Champagne"></button>
+          <button type="button" class="accent-dot" data-swatch="sapphire" aria-pressed="false" aria-label="Sapphire Lam Ngọc" title="Sapphire Đêm · Lam Ngọc"></button>
+        </div>
+        <button id="login-theme-toggle" class="icon-button login-control-btn" type="button" data-magnetic="2.5" aria-label="Chuyển giao diện sáng/tối" aria-pressed="false" title="Chuyển giao diện sáng/tối"><svg aria-hidden="true"><use href="/icons.svg#moon"/></svg></button>
+        <button class="icon-button login-control-btn" type="button" data-ambient-toggle data-magnetic="2.5" aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
+      </div>
+    </header>
+
+    <main class="login-stage">
+      <div class="hero-band">
+        <div class="hero-satellite sat-left" aria-hidden="true" data-parallax="-12">
+          <span class="sat-icon"><svg><use href="/icons.svg#check"/></svg></span>
+          <span>Chuẩn hóa ràng buộc CSDL</span>
+        </div>
+
+        <div class="login-hero">
+          <p class="login-product"><svg aria-hidden="true"><use href="/icons.svg#sparkles"/></svg><span>Quản trị chi phí &amp; CPA thời gian thực</span></p>
+          <p class="login-headline">Kiểm soát chi phí chiến dịch</p>
+        </div>
+
+        <div class="hero-satellite sat-right" aria-hidden="true" data-parallax="12">
+          <span class="sat-icon"><svg><use href="/icons.svg#chart-spline"/></svg></span>
+          <span>Biểu đồ &amp; CPA trực quan</span>
+        </div>
+
+        <p class="login-lead">Theo dõi khoản chi, chứng từ và tối ưu ngân sách đa kênh trong một không gian thống nhất.</p>
+      </div>
+
+      <section class="vault-stage" aria-labelledby="login-title">
+        <!-- Dual Counter-Rotating Symmetrical Orbital Rings centered behind the Vault -->
+        <div class="vault-halo" aria-hidden="true" data-parallax="-7">
+          <div class="art-rings outer-ring"><span class="art-orbit"></span></div>
+          <div class="art-rings inner-ring"><span class="art-orbit orbit-reverse"></span></div>
+        </div>
+
+        <!-- Subtle Symmetrical Telemetry Connector Beams linking Left <-> Vault <-> Right -->
+        <svg class="stage-connectors" viewBox="0 0 1120 420" preserveAspectRatio="none" aria-hidden="true">
+          <path class="connector-path" d="M 272 118 C 310 118, 316 168, 344 168" />
+          <path class="connector-path delay-1" d="M 272 296 C 310 296, 316 254, 344 254" />
+          <path class="connector-path" d="M 848 118 C 810 118, 804 168, 776 168" />
+          <path class="connector-path delay-1" d="M 848 296 C 810 296, 804 254, 776 254" />
+        </svg>
+
+        <!-- Left Floating Wing (Exact 272px Symmetrical Mirror) -->
+        <aside class="stage-wing wing-left" aria-hidden="true">
+          <div class="art-bars" data-parallax="12">
+            <div class="art-bars-head"><span>Thực chi 5 ngày</span><b>+18,4%</b></div>
+            <div class="art-bars-plot"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="wing-spark" data-parallax="8">
+            <div class="wing-spark-head"><span>Nhịp ngân sách</span><b>Ổn định</b></div>
+            <svg class="mini-spark-svg" viewBox="0 0 220 44">
+              <path class="mini-spark-area" d="M 4 36 C 34 32, 48 18, 82 22 C 118 26, 138 10, 174 14 C 194 16, 204 8, 216 6 L 216 42 L 4 42 Z" />
+              <path class="mini-spark-line" d="M 4 36 C 34 32, 48 18, 82 22 C 118 26, 138 10, 174 14 C 194 16, 204 8, 216 6" />
+              <circle class="mini-spark-dot" cx="216" cy="6" r="3.5" />
+            </svg>
+          </div>
+
+          <div class="wing-chip" data-parallax="-8">
+            <span class="wing-icon"><svg><use href="/icons.svg#receipt-text"/></svg></span>
+            <span><small>Chứng từ</small><strong>Khóa sổ tự động</strong></span>
+          </div>
+        </aside>
+
+        <!-- Dead-Center Focal Point: Liquid Crystal Vault Login Card -->
+        <div class="login-card" data-spotlight data-tilt="1.2">
+          <span class="vault-crown" aria-hidden="true"></span>
+          <div class="vault-head">
+            <div class="vault-emblem" aria-hidden="true">
+              <span class="vault-ring"></span>
+              <svg><use href="/icons.svg#lock-keyhole"/></svg>
+            </div>
+            <div class="vault-title-group">
+              <span class="vault-kicker">Cổng làm việc nội bộ</span>
+              <h1 id="login-title">Đăng nhập</h1>
+            </div>
+          </div>
+
+          <form id="login-form" action="/api/login" method="post">
+            <div class="vault-group">
+              <label for="username">Tên đăng nhập</label>
+              <div class="login-field">
+                <span class="field-icon-box" aria-hidden="true"><svg><use href="/icons.svg#user-round"/></svg></span>
+                <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Nhập tên tài khoản" maxlength="64" required>
+              </div>
+            </div>
+
+            <div class="vault-group">
+              <label for="password">Mật khẩu</label>
+              <div class="login-field password-field">
+                <span class="field-icon-box" aria-hidden="true"><svg><use href="/icons.svg#lock-keyhole"/></svg></span>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" maxlength="1024" required>
+                <button class="password-toggle" id="password-toggle" type="button" aria-label="Hiện mật khẩu" aria-controls="password" title="Hiện mật khẩu"><svg aria-hidden="true"><use href="/icons.svg#eye"/></svg></button>
+              </div>
+            </div>
+
+            <p id="login-error" class="form-error" role="alert" hidden></p>
+
+            <button id="login-submit" class="primary vault-submit" type="submit" data-magnetic="3.5">
+              <span class="submit-label">Tiếp tục vào Campaign Desk</span>
+              <span class="submit-badge" aria-hidden="true"><svg><use href="/icons.svg#arrow-right"/></svg></span>
+            </button>
+            <noscript><p class="login-copy">Bật JavaScript trong trình duyệt để đăng nhập.</p></noscript>
+          </form>
+
+          <div class="vault-foot">
+            <svg aria-hidden="true"><use href="/icons.svg#shield-check"/></svg>
+            <span>Tài khoản demo · Phiên HttpOnly 8 giờ</span>
+          </div>
+        </div>
+
+        <!-- Right Floating Wing (Exact 272px Symmetrical Mirror) -->
+        <aside class="stage-wing wing-right" aria-hidden="true">
+          <div class="wing-donut-card" data-parallax="12">
+            <div class="art-bars-head"><span>Tỷ trọng kênh</span><b>3 chiến dịch</b></div>
+            <div class="mini-donut-row">
+              <svg class="mini-donut-svg" viewBox="0 0 88 88">
+                <circle class="mini-donut-track" cx="44" cy="44" r="34" />
+                <circle class="mini-donut-seg seg-1" cx="44" cy="44" r="34" />
+                <circle class="mini-donut-seg seg-2" cx="44" cy="44" r="34" />
+                <circle class="mini-donut-seg seg-3" cx="44" cy="44" r="34" />
+              </svg>
+              <ul class="mini-donut-legend">
+                <li><i class="dot-a"></i><span>Social Ads</span><b>48%</b></li>
+                <li><i class="dot-b"></i><span>Search</span><b>31%</b></li>
+                <li><i class="dot-c"></i><span>KOL / PR</span><b>21%</b></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="wing-card" data-parallax="8">
+            <div class="wing-card-head">
+              <span class="wing-icon-sm"><svg><use href="/icons.svg#target"/></svg></span>
+              <small>Chi phí chuyển đổi (CPA)</small>
+              <span class="wing-badge">Trực tiếp</span>
+            </div>
+            <div class="wing-meter"><span></span></div>
+          </div>
+
+          <div class="wing-chip" data-parallax="-8">
+            <span class="wing-icon"><svg><use href="/icons.svg#layers"/></svg></span>
+            <span><small>Đa chiến dịch</small><strong>Đồng bộ MySQL 8.4</strong></span>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="login-footer" aria-hidden="true">
+      <span>Campaign Desk</span>
+      <span class="foot-dot"></span>
+      <span>Phân quyền nhân viên</span>
+      <span class="foot-dot"></span>
+      <span>Bảo mật phiên tự động</span>
+    </footer>
+  </div>
 </body>
 </html>
