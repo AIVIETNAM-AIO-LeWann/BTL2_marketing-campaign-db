@@ -28,11 +28,11 @@
     </div>
   </header>
   <main id="main-content" tabindex="-1">
-    <div class="context-bar"><button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Thu gọn thanh điều hướng" title="Thu gọn thanh điều hướng"><svg aria-hidden="true"><use href="/icons.svg#panel-left-close"/></svg></button><span>Chiến dịch marketing</span><svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg><strong id="current-page">Khoản chi</strong>
+    <div class="context-bar"><button id="sidebar-toggle" class="icon-button sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Thu gọn thanh điều hướng" title="Thu gọn thanh điều hướng"><svg aria-hidden="true"><use href="/icons.svg#panel-left-close"/></svg></button><label class="campaign-pill"><span class="sr-only">Chiến dịch đang xem</span><select id="campaign-switch"><option value="">Tất cả chiến dịch</option></select></label><svg class="divider-icon" aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg><strong id="current-page">Khoản chi</strong>
       <button class="palette-trigger" id="palette-open" type="button" aria-label="Mở bảng lệnh nhanh" aria-keyshortcuts="Control+K Meta+K"><svg aria-hidden="true"><use href="/icons.svg#search"/></svg><span>Tìm trang, chiến dịch, lệnh…</span><kbd>Ctrl K</kbd></button>
       <button class="icon-button desktop-motion" type="button" data-ambient-toggle aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
     </div>
-    <div class="workspace">
+    <div class="workspace" id="workspace">
     <div id="notice" class="notice-region" aria-live="polite"></div>
     <section id="khoan-chi" aria-labelledby="expense-title">
       <div class="page-head">
@@ -54,6 +54,7 @@
         <div class="expense-kpis">
           <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span><span class="stat-label">Số khoản chi</span><strong id="list-count">—</strong></div>
           <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg></span><span class="stat-label">Hoạt động có khoản chi</span><strong id="list-activities">—</strong></div>
+          <div class="stat focus-stat" id="focus-card" hidden><span class="eyebrow">Cần chú ý</span><strong id="focus-amount">—</strong><small id="focus-text"></small><button class="accent" id="focus-open" type="button">Xem khoản chi lớn nhất</button></div>
         </div>
       </div>
       <div class="panel expense-panel">

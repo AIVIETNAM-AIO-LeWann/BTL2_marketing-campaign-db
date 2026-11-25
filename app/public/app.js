@@ -47,7 +47,7 @@ function setupAppearance() {
     sidebar.querySelector('use').setAttribute('href', compact ? '/icons.svg#panel-left-open' : '/icons.svg#panel-left-close');
   }
 
-  applyTheme(preference('campaign-desk-theme') === 'dark');
+  applyTheme(preference('campaign-desk-theme') !== 'light');
   applySidebar(preference('campaign-desk-sidebar') === 'compact');
   theme.addEventListener('click', () => {
     applyTheme(root.dataset.theme !== 'dark');
@@ -259,6 +259,15 @@ function renderExpenses(items, params) {
   $('expense-empty').textContent = 'Không có khoản chi khớp bộ lọc.';
   $('expense-state').hidden = items.length > 0;
   renderSpendChart(dailySpend);
+  renderFocus(items);
+}
+
+function renderFocus(items) {
+  const top = items.reduce((best, item) => !best || BigInt(item.SoTien) > BigInt(best.SoTien) ? item : best, null);
+  $('focus-card').hidden = !top || items.length < 2;
+  if (!top) return;
+  $('focus-amount').textContent = currency(top.SoTien);
+  $('focus-text').textContent = `${top.NoiDungChi} · ${top.MaKhoanChi}`;
 }
 
 async function loadExpenses() {
@@ -563,12 +572,28 @@ const openPalette = setupPalette(() => [
   { label: 'Đổi giao diện sáng/tối', hint: 'Lệnh', run: () => $('theme-toggle').click() },
   { label: 'Thu gọn hoặc mở thanh điều hướng', hint: 'Lệnh', run: () => $('sidebar-toggle').click() },
   ...(catalog?.campaigns ?? []).map(c => ({ label: `${c.MaChienDich} · ${c.TenChienDich}`, hint: 'Lọc khoản chi theo chiến dịch', run: () => {
-    goTo('khoan-chi'); $('list-campaign').value = c.MaChienDich; syncListActivity(); void loadExpenses();
+    goTo('khoan-chi'); $('campaign-switch').value = $('list-campaign').value = c.MaChienDich; syncListActivity(); void loadExpenses();
   } })),
 ], query => ({ label: `Tìm khoản chi “${query}”`, hint: 'Tìm kiếm', run: () => {
   goTo('khoan-chi'); filters.elements.q.value = query; void loadExpenses();
 } }));
 $('palette-open').addEventListener('click', openPalette);
+$('focus-open').addEventListener('click', () => {
+  filters.elements.sort.value = 'TIEN_GIAM';
+  void loadExpenses().then(() => document.querySelector('#expense-rows tr')?.animate?.([{ background: 'var(--accent)' }, { background: 'transparent' }], { duration: 1400, easing: 'ease-out' }));
+  $('expense-results').scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
+});
+// Chọn chiến dịch ở thanh trên: mọi số liệu theo chiến dịch đó, như đổi không gian làm việc.
+$('campaign-switch').addEventListener('change', event => {
+  const code = event.target.value;
+  $('list-campaign').value = code; syncListActivity();
+  if (code && [...$('report-campaign').options].some(o => o.value === code)) { $('report-campaign').value = code; syncReportActivity(); }
+  const name = event.target.selectedOptions[0].textContent;
+  document.title = code ? `${name} · Campaign Desk` : 'Campaign Desk · Khoản chi marketing';
+  $('workspace').animate?.([{ opacity: .4, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: reducedMotion.matches ? 0 : 260, easing: 'cubic-bezier(.22,.75,.25,1)' });
+  void loadExpenses();
+  if (activePage === 'bao-cao') void loadReports();
+});
 document.addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b' && !event.shiftKey && !event.altKey) {
     event.preventDefault(); $('sidebar-toggle').click();
@@ -582,6 +607,7 @@ try {
   const campaigns = () => catalog.campaigns.map(c => option(c.MaChienDich, `${c.MaChienDich} · ${c.TenChienDich}`));
   replaceOptions($('list-campaign'), campaigns(), 'Tất cả chiến dịch');
   replaceOptions($('report-campaign'), campaigns());
+  replaceOptions($('campaign-switch'), campaigns(), 'Tất cả chiến dịch');
   syncListActivity();
   syncReportActivity();
   setDates(filters);

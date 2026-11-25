@@ -440,6 +440,35 @@ kbd { font: 600 .6875rem/1 Geist, system-ui, sans-serif; padding: 3px 6px; borde
   .stat, .panel, .context-bar, #palette { border: 1px solid CanvasText; backdrop-filter: none; }
   #palette li[aria-selected='true'] { outline: 2px solid Highlight; }
 }
+/* Tông tối khói với một màu nhấn lime, chọn chiến dịch ở thanh trên, thẻ cần chú ý. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:root[data-theme='dark'] {
+  --background: #101512; --foreground: #eef2e9; --card: #1b221d; --glass: #1c241fb8; --muted: #29322b; --muted-foreground: #b5c0b3;
+  --border: #ffffff1f; --input: #ffffff2e; --table-header: #ffffff0d; --table-hover: #ffffff0a; --accent: #c4ee4f26;
+  --primary: #c4ee4f; --primary-hover: #d3f56d; --primary-foreground: #1a2406; --ring: #c4ee4f; --mint: #c4ee4f;
+  --sidebar: #141a16d9; --sidebar-active: #ffffff14; --sidebar-border: #ffffff1c; --sidebar-muted: #aab6a8;
+  --tint-sky: #5d93c6; --tint-sand: #c9a14f; --tint-rose: #c4705f;
+}
+[data-theme='dark'] .dashboard-page { --canvas: linear-gradient(160deg, #1a2420, #111713 55%, #0d120f); --ambient-wash: radial-gradient(ellipse at 82% 6%, #3a5c3f 0%, transparent 46%), radial-gradient(ellipse at 10% 95%, #5c4a31 0%, transparent 46%); --ambient-opacity: .62; }
+[data-theme='dark'] .secondary-stat { background: linear-gradient(145deg, color-mix(in srgb, var(--tint) 32%, #12181480), #12181466 80%); }
+[data-theme='dark'] .spend-stat { background: radial-gradient(ellipse at 86% 25%, #3d5a2d, transparent 64%), linear-gradient(128deg, #1d2b20, #23351f); border-color: #ffffff22; }
+[data-theme='dark'] .spend-stat strong { color: #f6ffd9; }
+[data-theme='dark'] .primary, [data-theme='dark'] .brand-icon { color: #1a2406; }
+.chart-meter::-webkit-meter-bar { background: #ffffff14; border-radius: 6px; }
+.chart-column:last-child .chart-meter::-webkit-meter-optimum-value { background: linear-gradient(90deg, #a5d12e, #c4ee4f); }
+.chart-column:last-child .chart-meter::-moz-meter-bar { background: #c4ee4f; }
+
+.campaign-pill { display: inline-flex; min-width: 0; }
+.campaign-pill select { width: auto; max-width: min(300px, 34vw); min-height: 35px; border-radius: 999px; padding: 4px 30px 4px 14px; font-weight: 650; color: var(--foreground); background-color: var(--muted); border-color: transparent; text-overflow: ellipsis; }
+.campaign-pill select:hover { border-color: var(--input); }
+.focus-stat { display: grid; align-content: center; gap: 4px; padding: 14px 16px; background: linear-gradient(145deg, #55702b, #3a5224); border-color: #c4ee4f40; color: #f4fbe0; }
+.focus-stat .eyebrow { font-size: .6875rem; letter-spacing: .09em; text-transform: uppercase; color: #cfe49a; font-weight: 700; }
+.focus-stat strong { font-size: clamp(1.4rem, 2.4vw, 1.9rem); }
+.focus-stat small { color: #dbe9bb; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.accent { margin-top: 8px; justify-self: start; color: #1a2406; background: #c4ee4f; }
+.accent:hover:not(:disabled) { background: #d5f56f; box-shadow: 0 6px 16px -6px #c4ee4f80; }
+@media (max-width: 640px) { .focus-stat { grid-column: 1 / -1; } .campaign-pill select { max-width: 52vw; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .chart-meter::-webkit-meter-optimum-value, .ranked-bars meter::-webkit-meter-optimum-value { animation: none; }
