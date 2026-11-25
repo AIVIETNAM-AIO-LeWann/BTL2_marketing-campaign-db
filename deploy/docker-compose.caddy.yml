@@ -1,0 +1,25 @@
+# Chạy kèm docker-compose.yml khi không dùng Cloudflare: Caddy cấp HTTPS (Let's Encrypt) cho SITE_ADDRESS.
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d --build
+services:
+  app:
+    environment:
+      BIND_HOST: 0.0.0.0          # Caddy ở container khác trong cùng mạng Docker; không publish cổng của app
+      CLIENT_IP_HEADER: x-real-ip # do Caddy đặt trong Caddyfile
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?đặt SITE_ADDRESS trong deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [app]
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,59 @@
+# Campaign Desk: MySQL 8.4 + Node + Cloudflare Tunnel. Chạy từ thư mục deploy/ (xem docs/deploy-docker.md).
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?đặt MYSQL_ROOT_PASSWORD trong deploy/.env}
+      APP_DB_USER: marketing_web_app
+      APP_DB_PASSWORD: ${DB_PASSWORD:?đặt DB_PASSWORD trong deploy/.env}
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ../database:/sql:ro
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  app:
+    build: ../app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: marketing_web_app
+      DB_PASSWORD: ${DB_PASSWORD}
+      DEMO_ACTOR: ${DEMO_ACTOR:-NV04}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?đặt DEMO_PASSWORD (ít nhất 12 ký tự) trong deploy/.env}
+      PORT: "8080"
+    # Không publish cổng nào: chỉ cloudflared (cùng mạng) truy cập được app.
+
+  # Địa chỉ tạm *.trycloudflare.com, đổi mỗi lần khởi động. Xem địa chỉ: docker compose logs tunnel-quick
+  tunnel-quick:
+    image: cloudflare/cloudflared:latest
+    profiles: ["quick"]
+    restart: unless-stopped
+    network_mode: "service:app"
+    command: ["tunnel", "--no-autoupdate", "--url", "http://127.0.0.1:8080"]
+    depends_on: [app]
+
+  # Địa chỉ cố định trên tên miền của bạn (cần TUNNEL_TOKEN).
+  tunnel-named:
+    image: cloudflare/cloudflared:latest
+    profiles: ["named"]
+    restart: unless-stopped
+    network_mode: "service:app"
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on: [app]
+
+volumes:
+  dbdata:

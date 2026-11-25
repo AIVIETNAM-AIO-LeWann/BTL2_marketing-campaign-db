@@ -1,0 +1,8 @@
+# SITE_ADDRESS là tên máy chủ công khai, ví dụ 3-1-2-4.sslip.io (xem docs/deploy-docker.md).
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	reverse_proxy app:8080 {
+		# Ghi đè giá trị client gửi lên: app dùng header này để giới hạn đăng nhập theo từng người.
+		header_up X-Real-IP {remote_host}
+	}
+}
