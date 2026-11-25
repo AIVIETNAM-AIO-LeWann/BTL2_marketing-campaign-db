@@ -1,3 +1,5 @@
+import './ambient.js';
+
 const $ = (id) => document.getElementById(id);
 const filters = $('expense-filters');
 const reportFilters = $('report-filters');
@@ -7,10 +9,13 @@ const expenseDialog = $('expense-dialog');
 const deleteDialog = $('delete-dialog');
 const num = new Intl.NumberFormat('vi-VN');
 const finished = new Set(['HOAN_THANH', 'HUY']);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let catalog;
 let expenseRequest;
 let reportRequest;
 let deletingId;
+let activePage;
+let pageTransition;
 
 function preference(key, value) {
   try {
@@ -243,6 +248,7 @@ async function loadExpenses() {
   expenseRequest = request;
   const submit = filters.querySelector('[type=submit]');
   submit.disabled = true;
+  $('expense-results').setAttribute('aria-busy', 'true');
   try {
     const result = await api(`/api/expenses?${params}`, { signal: request.signal });
     if (expenseRequest === request) renderExpenses(result.rows, params);
@@ -252,7 +258,10 @@ async function loadExpenses() {
       $('expense-empty').textContent = 'Chưa tải được khoản chi. Hãy thử lọc lại.';
     }
   } finally {
-    if (expenseRequest === request) submit.disabled = false;
+    if (expenseRequest === request) {
+      submit.disabled = false;
+      $('expense-results').setAttribute('aria-busy', 'false');
+    }
   }
 }
 
@@ -323,23 +332,57 @@ async function removeExpense(event) {
   } finally { setBusy(deleteForm, false); }
 }
 
+function renderRankedExpenses(items, params) {
+  const top = items.slice(0, 5);
+  const total = items.reduce((sum, item) => sum + BigInt(item.TongChiTrongKy), 0n);
+  const max = top.reduce((largest, item) => {
+    const amount = BigInt(item.TongChiTrongKy);
+    return amount > largest ? amount : largest;
+  }, 0n);
+  $('report-total').textContent = currency(total);
+  $('ranked-scope').textContent = top.length < items.length ? '5 hoạt động chi nhiều nhất theo bộ lọc' :
+    `Từ ${day(params.get('from'))} đến ${day(params.get('to'))}`;
+  $('ranked-note').textContent = 'Không có khoản chi đạt ngưỡng lọc.';
+  $('ranked-note').hidden = top.length > 0;
+  $('ranked-bars').replaceChildren(...top.map(item => {
+    const row = document.createElement('li');
+    const name = document.createElement('span');
+    name.className = 'ranked-name';
+    name.textContent = `${item.MaHoatDong} · ${item.TenHoatDong}`;
+    name.title = name.textContent;
+    const amount = document.createElement('strong');
+    amount.textContent = currency(item.TongChiTrongKy);
+    const meter = document.createElement('meter');
+    meter.max = 1000;
+    meter.value = max ? Number(BigInt(item.TongChiTrongKy) * 1000n / max) : 0;
+    meter.setAttribute('aria-hidden', 'true');
+    row.append(name, amount, meter);
+    return row;
+  }));
+}
+
+function setReportBusy(busy) {
+  reportFilters.querySelector('[type=submit]').disabled = busy;
+  $('report-overview').setAttribute('aria-busy', String(busy));
+  $('report-results').setAttribute('aria-busy', String(busy));
+}
+
 async function loadReports() {
-  if (!catalog?.campaigns.length) return;
+  if (!catalog) return;
+  if (!catalog.campaigns.length) {
+    setReportBusy(false);
+    $('ranked-note').textContent = 'Chưa có chiến dịch để lập báo cáo.';
+    $('report-empty').textContent = 'Chưa có chiến dịch để lập báo cáo.';
+    return;
+  }
   let params;
   try { params = parameters(reportFilters); }
   catch (error) { return banner(error.message, true); }
   reportRequest?.abort();
   const request = new AbortController();
   reportRequest = request;
-  const submit = reportFilters.querySelector('[type=submit]');
-  submit.disabled = true;
-  $('report-overspent').textContent = '—';
-  $('report-cpa').textContent = '—';
-  $('cpa-note').textContent = 'CPA của hoạt động trong kỳ';
-  $('report-count').textContent = '';
-  $('report-rows').replaceChildren();
-  $('report-state').hidden = false;
-  $('report-empty').textContent = 'Đang tải báo cáo…';
+  setReportBusy(true);
+  if (!$('report-state').hidden) $('report-empty').textContent = 'Đang tải báo cáo…';
   const operations = await Promise.allSettled([
     api(`/api/reports?${params}`, { signal: request.signal }),
     api(`/api/metrics?${params}`, { signal: request.signal }),
@@ -347,6 +390,7 @@ async function loadReports() {
   if (reportRequest !== request) return;
   const [report, metrics] = operations;
   if (report.status === 'fulfilled') {
+    renderRankedExpenses(report.value.rows, params);
     const fragment = document.createDocumentFragment();
     for (const item of report.value.rows) {
       const row = document.createElement('tr');
@@ -361,19 +405,37 @@ async function loadReports() {
     $('report-count').textContent = `${report.value.rows.length} hoạt động`;
     $('report-state').hidden = report.value.rows.length > 0;
     $('report-empty').textContent = 'Không có hoạt động đạt ngưỡng tổng chi trong kỳ.';
-  } else { $('report-empty').textContent = report.reason.message; }
+  } else {
+    $('ranked-bars').replaceChildren();
+    $('report-total').textContent = '—';
+    $('ranked-scope').textContent = 'Theo các hoạt động đạt ngưỡng lọc';
+    $('ranked-note').hidden = false;
+    $('ranked-note').textContent = 'Chưa tải được thực chi.';
+    $('report-rows').replaceChildren();
+    $('report-count').textContent = '';
+    $('report-state').hidden = false;
+    $('report-empty').textContent = report.reason.message;
+  }
   if (metrics.status === 'fulfilled') {
     $('report-overspent').textContent = metrics.value.overspent;
     const cpa = metrics.value.cpa;
     $('report-cpa').textContent = cpa === null ? '—' : currency(cpa);
     $('cpa-note').textContent = !params.get('activity') ? 'Chọn một hoạt động để tính CPA.' :
       cpa === null ? 'Thiếu dữ liệu ngày hoặc tổng chuyển đổi bằng 0.' : 'VND cho mỗi lượt chuyển đổi';
-  } else { $('cpa-note').textContent = metrics.reason.message; }
-  submit.disabled = false;
+  } else {
+    $('report-overspent').textContent = '—';
+    $('report-cpa').textContent = '—';
+    $('cpa-note').textContent = metrics.reason.message;
+  }
+  setReportBusy(false);
 }
 
-function showPage() {
-  const active = location.hash === '#bao-cao' ? 'bao-cao' : 'khoan-chi';
+function pageFromHash() {
+  return location.hash === '#bao-cao' ? 'bao-cao' : 'khoan-chi';
+}
+
+function showPage(active = pageFromHash()) {
+  activePage = active;
   $('current-page').textContent = active === 'bao-cao' ? 'Báo cáo' : 'Khoản chi';
   banner();
   for (const link of document.querySelectorAll('nav a[data-page]')) {
@@ -383,6 +445,35 @@ function showPage() {
     $(link.dataset.page).hidden = !selected;
   }
   if (active === 'bao-cao') void loadReports();
+}
+
+function transitionToPage() {
+  if (pageFromHash() === activePage) return;
+  pageTransition?.skipTransition();
+  const update = () => {
+    showPage();
+    window.scrollTo(0, 0);
+  };
+  if (reducedMotion.matches || !document.startViewTransition) {
+    update();
+    if (!reducedMotion.matches) {
+      $(activePage).animate?.([{ opacity: .45, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 180, easing: 'ease-out' });
+    }
+    return;
+  }
+  const root = document.documentElement;
+  root.dataset.pageTransition = '';
+  const transition = document.startViewTransition(update);
+  pageTransition = transition;
+  void transition.ready.catch(() => {});
+  const clear = () => {
+    if (pageTransition === transition) {
+      delete root.dataset.pageTransition;
+      pageTransition = null;
+    }
+  };
+  void transition.finished.then(clear, clear);
 }
 
 filters.addEventListener('submit', event => {
@@ -410,12 +501,18 @@ editor.addEventListener('submit', saveExpense);
 deleteForm.addEventListener('submit', removeExpense);
 document.querySelector('.skip-link').addEventListener('click', event => {
   event.preventDefault();
-  $(location.hash === '#bao-cao' ? 'report-title' : 'expense-title').focus();
+  $(activePage === 'bao-cao' ? 'report-title' : 'expense-title').focus();
 });
-window.addEventListener('hashchange', () => {
-  showPage();
-  window.scrollTo(0, 0);
-});
+for (const link of document.querySelectorAll('nav a[data-page]')) {
+  link.addEventListener('click', event => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (pageFromHash() === link.dataset.page) return;
+    history.pushState(null, '', link.hash);
+    transitionToPage();
+  });
+}
+window.addEventListener('hashchange', transitionToPage);
 window.addEventListener('pageshow', event => {
   if (event.persisted) window.location.reload();
 });
@@ -447,6 +544,7 @@ try {
   showPage();
   await loadExpenses();
 } catch (error) {
+  $('expense-results').setAttribute('aria-busy', 'false');
   $('expense-empty').textContent = 'Chưa tải được dữ liệu MySQL.';
   banner(error.message, true);
 }

@@ -11,11 +11,13 @@
   <script type="module" src="/login.js"></script>
 </head>
 <body class="login-page">
+  <div class="ambient" aria-hidden="true"></div>
+  <button class="icon-button login-motion" type="button" data-ambient-toggle aria-label="Tạm dừng nền chuyển động" aria-pressed="false" title="Tạm dừng nền chuyển động"><svg aria-hidden="true"><use href="/icons.svg#pause"/></svg></button>
   <main class="login-layout">
     <aside class="login-intro" aria-label="Giới thiệu Campaign Desk">
       <div class="login-brand"><span class="brand-icon"><svg aria-hidden="true"><use href="/icons.svg#chart-no-axes-column-increasing"/></svg></span><strong>Campaign Desk</strong></div>
       <div class="login-art" aria-hidden="true">
-        <div class="art-rings"></div>
+        <div class="art-rings"><span class="art-orbit"></span></div>
         <div class="art-bars"><i></i><i></i><i></i><i></i><i></i></div>
         <span class="art-chip art-chip-receipt"><svg><use href="/icons.svg#receipt-text"/></svg></span>
         <span class="art-chip art-chip-target"><svg><use href="/icons.svg#target"/></svg></span>

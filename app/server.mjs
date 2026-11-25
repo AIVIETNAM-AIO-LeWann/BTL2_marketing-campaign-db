@@ -20,6 +20,7 @@ const db = mysql.createPool({
 const staticFiles = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/ambient.js', ['ambient.js', 'text/javascript; charset=utf-8']],
   ['/login.css', ['login.css', 'text/css; charset=utf-8']],
   ['/login.js', ['login.js', 'text/javascript; charset=utf-8']],
   ['/icons.svg', ['icons.svg', 'image/svg+xml']],

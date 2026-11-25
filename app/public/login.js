@@ -1,3 +1,5 @@
+import './ambient.js';
+
 const form = document.getElementById('login-form');
 const password = document.getElementById('password');
 const toggle = document.getElementById('password-toggle');
@@ -33,6 +35,9 @@ form.addEventListener('submit', async event => {
     });
     if (response.ok) {
       navigating = true;
+      password.type = 'password';
+      password.value = '';
+      submit.textContent = 'Đang mở Campaign Desk…';
       window.location.replace('/');
       return;
     }
