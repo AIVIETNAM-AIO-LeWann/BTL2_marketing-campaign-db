@@ -22,7 +22,7 @@ Nút phát hoặc tạm dừng nền có ở màn hình đăng nhập và trên 
 
 ## Chạy web
 
-1. Dùng Node.js 22 trở lên và MySQL 8.4. Nạp phần 1 và phần 2 theo thứ tự trong [README](../README.md). Dùng database riêng có dữ liệu mẫu khi demo.
+1. Dùng Node.js 22.9 trở lên và MySQL 8.4. Nạp phần 1 và phần 2 theo thứ tự trong [README](../README.md). Dùng database riêng có dữ liệu mẫu khi demo.
 2. Trong MySQL client quản trị, nạp `SOURCE database/part3/01_app_role.sql;`. Tạo tài khoản database riêng cho web bằng các lệnh sau. Thay giá trị mẫu bằng mật khẩu riêng và dùng host phù hợp với máy Node kết nối tới MySQL.
 
    ```sql

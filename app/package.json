@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
-  "scripts": { "start": "node --env-file-if-exists=.env server.mjs" },
+  "engines": { "node": ">=22.9.0" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server.mjs",
+    "tunnel": "node --env-file-if-exists=.env tunnel.mjs"
+  },
   "dependencies": { "mysql2": "^3.15.3" }
 }
