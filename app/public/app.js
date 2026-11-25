@@ -645,7 +645,7 @@ $('drawer-delete')?.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// Custom Sylva Frosted-Glass Campaign Switcher
+// Campaign switcher (frosted-glass menu)
 // ==========================================================================
 function setupCampaignSwitcher() {
   const select = $('campaign-switch');
