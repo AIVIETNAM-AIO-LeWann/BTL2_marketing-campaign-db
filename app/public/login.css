@@ -117,7 +117,7 @@
 .art-bars i:nth-child(3) { height: 45%; opacity: .72; --bar-delay: .54s; }
 .art-bars i:nth-child(4) { height: 74%; opacity: .85; --bar-delay: .69s; }
 .art-bars i:nth-child(5) { height: 93%; --bar-delay: .84s; box-shadow: 0 0 16px #a7e4a22b, inset 0 1px #f2ffe8bb; }
-.art-bars i:last-child::after {
+.art-bars i::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -125,7 +125,7 @@
   box-shadow: 0 0 24px #c8ffae86, inset 0 1px #fff;
   opacity: 0;
 }
-:root[data-ambient='playing'] .art-bars i:last-child::after { animation: bar-highlight .75s ease-in-out 1.45s both; }
+:root[data-ambient='playing'] .art-bars i[data-glow]::after { animation: bar-highlight 1.25s ease-in-out both; }
 @keyframes bar-appear { from { transform: scaleY(.02); opacity: 0; } }
 @keyframes bar-highlight { 45% { opacity: 1; } }
 .art-chip {

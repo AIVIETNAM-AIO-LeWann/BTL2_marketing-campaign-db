@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
-<body>
+<body class="dashboard-page">
   <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <header class="topbar" id="workspace-sidebar">
@@ -38,7 +38,7 @@
         <div><h1 id="expense-title" tabindex="-1">Quản lý khoản chi</h1><p class="intro">Theo dõi chi phí và chứng từ theo từng chiến dịch.</p></div>
         <button class="primary" id="open-create" type="button" disabled><svg aria-hidden="true"><use href="/icons.svg#plus"/></svg> Thêm khoản chi</button>
       </div>
-      <div class="stats" aria-label="Tổng quan theo bộ lọc">
+      <div class="expense-summary" aria-label="Tổng quan theo bộ lọc">
         <div class="stat spend-stat">
           <div class="stat-copy">
             <span class="stat-label"><svg aria-hidden="true"><use href="/icons.svg#wallet"/></svg> Tổng chi theo bộ lọc</span>
@@ -50,8 +50,10 @@
             <div class="chart-bars" id="chart-bars" role="list"></div>
           </figure>
         </div>
-        <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span><span class="stat-label">Số khoản chi</span><strong id="list-count">—</strong></div>
-        <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg></span><span class="stat-label">Hoạt động có khoản chi</span><strong id="list-activities">—</strong></div>
+        <div class="expense-kpis">
+          <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#receipt-text"/></svg></span><span class="stat-label">Số khoản chi</span><strong id="list-count">—</strong></div>
+          <div class="stat secondary-stat"><span class="stat-icon"><svg aria-hidden="true"><use href="/icons.svg#layers"/></svg></span><span class="stat-label">Hoạt động có khoản chi</span><strong id="list-activities">—</strong></div>
+        </div>
       </div>
       <div class="panel expense-panel">
         <div class="table-head"><h2>Danh sách khoản chi</h2><span id="table-count" class="count" aria-live="polite"></span></div>

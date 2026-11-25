@@ -18,7 +18,7 @@ Giao diện HTML/CSS sử dụng hệ biến màu và mẫu bảng, hộp thoạ
 
 Bề mặt kính mờ và thanh điều hướng thu gọn lấy cảm hứng từ [Sylva](https://codeandchill.store/templates/sylva). Nút cạnh đường dẫn trang thu gọn thanh điều hướng trên máy tính. Nút ở cuối thanh điều hướng đổi giao diện sáng/tối. Trình duyệt lưu hai lựa chọn này cho lần mở sau.
 
-Nút phát hoặc tạm dừng nền có ở màn hình đăng nhập và trên thanh điều hướng của ứng dụng. Trên màn đăng nhập, nút này còn điều khiển vòng sáng và các biểu tượng trong khung minh họa. Trình duyệt dùng chung lựa chọn này cho cả hai màn hình. Khi hệ điều hành yêu cầu giảm chuyển động, hiệu ứng nền và chuyển cảnh tự tắt.
+Nút phát hoặc tạm dừng nền có ở màn hình đăng nhập và trên thanh điều hướng của ứng dụng. Nút này cũng điều khiển nhịp sáng ngẫu nhiên trên các cột biểu đồ và chuyển động trong khung minh họa đăng nhập. Trình duyệt dùng chung lựa chọn này cho cả hai màn hình. Khi hệ điều hành yêu cầu giảm chuyển động, hiệu ứng nền, nhịp sáng và chuyển cảnh tự tắt.
 
 ## Chạy web
 
