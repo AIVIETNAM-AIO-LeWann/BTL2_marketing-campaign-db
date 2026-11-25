@@ -5,6 +5,8 @@ import { createServer } from 'node:http';
 import mysql from 'mysql2/promise';
 
 const config = process.env;
+const clientIpHeader = (config.CLIENT_IP_HEADER ?? 'cf-connecting-ip').toLowerCase();
+const bindHost = config.BIND_HOST ?? '127.0.0.1';
 const actor = config.DEMO_ACTOR ?? 'NV04';
 if (!config.DB_USER || !config.DB_PASSWORD || (config.DEMO_PASSWORD?.length ?? 0) < 12) {
   throw new Error('Đặt DB_USER, DB_PASSWORD và DEMO_PASSWORD (ít nhất 12 ký tự) trong app/.env.');
@@ -52,7 +54,7 @@ function activeSession(request) {
 }
 
 function setSessionCookie(request, response, value, seconds) {
-  // Node only listens on loopback. cloudflared supplies the public scheme.
+  // Node chỉ nhận yêu cầu từ proxy tin cậy (cloudflared hoặc Caddy), proxy này đặt x-forwarded-proto.
   const viaHttps = request.headers['x-forwarded-proto'] === 'https';
   response.setHeader('Set-Cookie', `${sessionCookie}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${seconds}${viaHttps ? '; Secure' : ''}`);
 }
@@ -65,9 +67,10 @@ async function login(request, response) {
     failedLogins = 0;
   }
   // Mỗi người một bộ đếm riêng để một người nhập sai không khóa người khác; tổng chung giữ trần cho việc dò mật khẩu.
-  // cf-connecting-ip do cloudflared đặt; Node chỉ nghe loopback nên không ai ngoài đường hầm tự đặt được.
+  // Header IP do proxy tin cậy đặt (mặc định cf-connecting-ip của cloudflared; với Caddy dùng x-real-ip qua CLIENT_IP_HEADER).
+  // Chỉ proxy đó tới được Node nên người ngoài không tự đặt được header này; không mở cổng của Node ra ngoài.
   // Giá trị header không phải địa chỉ IP hợp lệ thì dùng địa chỉ kết nối thật, để không tạo khóa tùy ý.
-  const forwarded = request.headers['cf-connecting-ip'];
+  const forwarded = request.headers[clientIpHeader];
   const client = isIP(forwarded ?? '') ? forwarded : (request.socket.remoteAddress ?? '');
   let mine = failedByClient.get(client);
   if (mine && now >= mine.windowEnd) { failedByClient.delete(client); mine = undefined; }
@@ -335,7 +338,7 @@ await rows('SELECT 1');
 server.headersTimeout = 10_000;
 server.requestTimeout = 15_000;
 const port = Number(config.PORT ?? 8080);
-server.listen(port, '127.0.0.1', () => console.log(`Marketing demo: http://127.0.0.1:${port}`));
+server.listen(port, bindHost, () => console.log(`Marketing demo: http://${bindHost}:${port}`));
 for (const signal of ['SIGINT','SIGTERM']) {
   process.on(signal, () => server.close(() => void db.end()));
 }

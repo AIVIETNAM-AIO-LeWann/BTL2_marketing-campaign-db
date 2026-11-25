@@ -151,4 +151,4 @@ GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, r�
 
 ## Web quản lý khoản chi
 
-Ứng dụng Node.js trong `app/` gọi trực tiếp các routine MySQL. Sau khi nạp database mẫu bằng `node scripts/setup-demo.mjs`, chạy `npm ci` và `npm start` trong `app`. Từ terminal khác, `npm run tunnel` trong `app` mở URL HTTPS tạm thời. [Hướng dẫn Cloudflare](docs/demo-cloudflare.md) có thêm cách đặt tên miền cố định và vị trí chỉnh cấu hình, giao diện. Xem [hướng dẫn phần 3](docs/part3-web.md) để đối chiếu các chức năng, cài thủ công hoặc lấy kịch bản trình bày.
+Ứng dụng Node.js trong `app/` gọi trực tiếp các routine MySQL. Sau khi nạp database mẫu bằng `node scripts/setup-demo.mjs`, chạy `npm ci` và `npm start` trong `app`. Từ terminal khác, `npm run tunnel` trong `app` mở URL HTTPS tạm thời. [Hướng dẫn Cloudflare](docs/demo-cloudflare.md) có thêm cách đặt tên miền cố định và vị trí chỉnh cấu hình, giao diện. Xem [hướng dẫn phần 3](docs/part3-web.md) để đối chiếu các chức năng, cài thủ công hoặc lấy kịch bản trình bày. Muốn chạy liên tục 24/7 trên một máy chủ, dùng bộ Docker trong [deploy/](deploy/) theo [hướng dẫn triển khai](docs/deploy-docker.md).
