@@ -7,14 +7,11 @@
 5. **Tài khoản 1:1**: không sinh tài khoản tự động với mật khẩu mặc định; tạo nhân viên và tài khoản trong một workflow giao dịch. Seed chỉ dùng chuỗi không đăng nhập được.
 6. **Ngân sách và thực chi tách biệt**: chặn phân bổ ngân sách vượt hạn mức, nhưng cho phép thực chi vượt ngân sách và hiển thị chênh lệch. Tiền ghi bằng VND.
 7. **Dữ liệu đo lường NULL khác 0**: thiếu dữ liệu không được biến thành kết quả bằng 0. Chỉ số tỷ lệ dùng tổng tử số/tổng mẫu số trong cùng phạm vi và trả NULL nếu không đủ điều kiện. Không lấy trung bình các tỷ lệ ngày.
-8. **Chính sách xóa**: các FK không CASCADE. Bản ghi đang dùng bị FK chặn; dữ liệu phân công/chi phí/kết quả thuộc đối tượng đã kết thúc được giữ lại. Procedure xóa KhoanChi chi tiết sẽ làm ở phần 2; chưa có màn hình hay procedure CRUD trong phần 1.
-9. **Thuộc tính dẫn xuất**: thời lượng tính qua view; tổng thực chi hiện cũng tính qua view. Việc thêm cột TongChiPhiThucTe lưu vật lý và trigger đồng bộ dành cho phần 2. Không lưu một cột cache chưa có cơ chế cập nhật.
-10. **Phân quyền**: role marketing_p1 chỉ có đọc và gọi các workflow tạo dữ liệu đầy đủ. Không dùng root hoặc cấp raw DML cho ứng dụng; biến phiên trong workflow không thay thế quyền truy cập.
+8. **Chính sách xóa**: các FK không CASCADE. Bản ghi đang dùng bị FK chặn; dữ liệu phân công/chi phí/kết quả thuộc đối tượng đã kết thúc được giữ lại. Ba procedure 2.1 chỉ cho người tạo sửa/xóa khoản chi còn mở; xóa nhằm xử lý nhập nhầm/trùng, không xóa chi phí đã khóa sổ.
+9. **Thuộc tính dẫn xuất**: thời lượng tính qua view. Phần 2.2 thêm cột TongChiPhiThucTe và trigger đồng bộ khi thêm/sửa/xóa/chuyển khoản chi; view tổng chi vẫn được giữ để đối soát độc lập.
+10. **Phân quyền**: role marketing_p1 có đọc, gọi các workflow tạo dữ liệu đầy đủ và hai function 2.4. Quyền gọi procedure CRUD/truy vấn cần cấp theo tài khoản ứng dụng khi làm phần 3. Không dùng root hoặc cấp raw DML cho ứng dụng; biến phiên trong workflow không thay thế quyền truy cập.
 
 ## Đầu việc tiếp theo (chưa hiện thực)
 
-- Ba procedure CRUD KhoanChi, hai procedure truy vấn có tham số.
-- Hai function có cursor: đếm hoạt động vượt ngân sách và tính CPA trong khoảng ngày.
-- Trigger duy trì tổng chi phí vật lý; tái sử dụng kiểm tra RB07 làm minh chứng trigger nghiệp vụ khi báo cáo.
 - Ứng dụng web, kết nối MySQL bằng user giới hạn quyền, xử lý lỗi và giao diện.
 - Phân công sao cho cả bốn thành viên có đóng góp SQL phần 2 và hiểu các workflow/ràng buộc nền tảng.
