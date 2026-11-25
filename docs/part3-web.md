@@ -28,7 +28,7 @@ Bề mặt kính mờ và thanh điều hướng thu gọn lấy cảm hứng t�
    ```
 
 3. Sao chép `app/.env.example` thành `app/.env`. Điền `DB_PASSWORD` của tài khoản vừa tạo và đặt `DEMO_PASSWORD` riêng từ 12 ký tự trở lên. `DEMO_ACTOR=NV04` dùng với seed hiện có. Tất cả khách đăng nhập web sử dụng danh tính nghiệp vụ do server cấu hình. Tài khoản `demo` của web là một lớp truy cập dùng chung cho buổi demo; tài khoản nhân viên trong CSDL vẫn được procedure dùng để kiểm tra quyền ghi.
-4. Tại thư mục `app`, chạy `npm ci` rồi `npm start`. Mở `http://127.0.0.1:8080` và đăng nhập với tên `demo` cùng `DEMO_PASSWORD`.
+4. Tại thư mục `app`, chạy `npm ci` rồi `npm start`. Mở `http://127.0.0.1:8080` và nhập `demo` cùng `DEMO_PASSWORD` tại màn hình đăng nhập. Nút đăng xuất nằm cạnh nút đổi giao diện. Phiên demo hết hạn sau 8 giờ hoặc khi khởi động lại web.
 
 Giữ `.env` cục bộ. Tài khoản web MySQL chỉ cần role `marketing_web`; phần ghi dữ liệu đi qua procedure.
 

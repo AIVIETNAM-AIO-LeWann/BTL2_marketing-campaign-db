@@ -93,6 +93,7 @@ nav a:hover, nav a[aria-current] { background: var(--sidebar-active); color: var
 nav a[aria-current] svg { color: var(--mint); }
 .topbar :focus-visible { outline-color: var(--mint); }
 .rail-footer { display: flex; justify-content: space-between; align-items: center; gap: 5px; margin-top: auto; padding: 12px 3px 1px; border-top: 1px solid var(--sidebar-border); }
+.rail-actions { display: flex; gap: 5px; }
 .operator { display: flex; align-items: center; gap: 9px; }
 .rail-button { color: var(--sidebar-foreground); background: var(--sidebar-active); padding: 7px; min-height: 38px; min-width: 38px; }
 .rail-button:hover { background: #3a5947; }
@@ -207,6 +208,7 @@ dialog::backdrop { background: #192e2294; backdrop-filter: blur(3px); }
   [data-sidebar='compact'] .brand-label, [data-sidebar='compact'] .nav-label, [data-sidebar='compact'] .operator-label { display: none; }
   [data-sidebar='compact'] .brand, [data-sidebar='compact'] nav a { justify-content: center; padding-inline: 0; }
   [data-sidebar='compact'] .rail-footer { flex-direction: column; gap: 10px; }
+  [data-sidebar='compact'] .rail-actions { flex-direction: column; }
 }
 @media (max-width: 1200px) {
   :root { --sidebar-width: 190px; }
@@ -274,6 +276,10 @@ dialog::backdrop { background: #192e2294; backdrop-filter: blur(3px); }
   .form-fields { grid-template-columns: minmax(0,1fr); }
   .spend-stat { gap: 6px; padding-inline: 11px; }
   .spend-chart { min-width: 84px; }
+}
+@media (max-width: 410px) {
+  .rail-footer .operator { display: none; }
+  .rail-actions { gap: 3px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

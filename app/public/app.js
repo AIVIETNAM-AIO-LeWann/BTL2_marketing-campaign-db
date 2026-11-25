@@ -57,6 +57,7 @@ async function api(path, { signal, method = 'GET', data } = {}) {
     method, signal,
     ...(data && { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
   });
+  if (response.status === 401) window.location.replace('/login');
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error ?? 'Yêu cầu không thành công.');
   return payload;
@@ -414,6 +415,20 @@ document.querySelector('.skip-link').addEventListener('click', event => {
 window.addEventListener('hashchange', () => {
   showPage();
   window.scrollTo(0, 0);
+});
+window.addEventListener('pageshow', event => {
+  if (event.persisted) window.location.reload();
+});
+$('logout').addEventListener('click', async () => {
+  const button = $('logout');
+  button.disabled = true;
+  try {
+    await api('/api/logout', { method: 'POST', data: {} });
+    window.location.replace('/login');
+  } catch (error) {
+    banner(error.message, true);
+    button.disabled = false;
+  }
 });
 setupAppearance();
 

@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import mysql from 'mysql2/promise';
@@ -18,9 +18,10 @@ const db = mysql.createPool({
 });
 
 const staticFiles = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/login.css', ['login.css', 'text/css; charset=utf-8']],
+  ['/login.js', ['login.js', 'text/javascript; charset=utf-8']],
   ['/icons.svg', ['icons.svg', 'image/svg+xml']],
   ['/favicon.svg', ['favicon.svg', 'image/svg+xml']],
   ['/geist-latin.woff2', ['geist-latin.woff2', 'font/woff2']],
@@ -28,7 +29,56 @@ const staticFiles = new Map([
 ]);
 const sortOptions = new Set(['NGAY_TANG','NGAY_GIAM','TIEN_TANG','TIEN_GIAM']);
 const digest = (value) => createHash('sha256').update(value).digest();
-const expectedAuth = digest('Basic ' + Buffer.from(`demo:${config.DEMO_PASSWORD}`).toString('base64'));
+const expectedPassword = digest(config.DEMO_PASSWORD);
+const sessionCookie = 'campaign_desk_session';
+const sessionSeconds = 8 * 60 * 60;
+const sessions = new Map();
+let loginWindowEnd = 0;
+let failedLogins = 0;
+
+function activeSession(request) {
+  const key = request.headers.cookie?.match(/(?:^|;\s*)campaign_desk_session=([a-f0-9]{64})(?:;|$)/)?.[1];
+  if (!key || !sessions.has(key)) return null;
+  if (sessions.get(key) > Date.now()) return key;
+  sessions.delete(key);
+  return null;
+}
+
+function setSessionCookie(request, response, value, seconds) {
+  // Node only listens on loopback. cloudflared supplies the public scheme.
+  const viaHttps = request.headers['x-forwarded-proto'] === 'https';
+  response.setHeader('Set-Cookie', `${sessionCookie}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${seconds}${viaHttps ? '; Secure' : ''}`);
+}
+
+async function login(request, response) {
+  const body = await jsonBody(request);
+  const now = Date.now();
+  if (now >= loginWindowEnd) {
+    loginWindowEnd = now + 60_000;
+    failedLogins = 0;
+  }
+  if (failedLogins >= 12) {
+    response.setHeader('Retry-After', String(Math.max(1, Math.ceil((loginWindowEnd - now) / 1000))));
+    return send(response, 429, { error: 'Đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.' });
+  }
+  const username = string(body.username, 'Tên đăng nhập', 64);
+  const password = string(body.password, 'Mật khẩu', 1024, { trim: false });
+  const validPassword = timingSafeEqual(digest(password), expectedPassword);
+  if (username !== 'demo' || !validPassword) {
+    failedLogins++;
+    return send(response, 401, { error: 'Tên đăng nhập hoặc mật khẩu không đúng.' });
+  }
+  for (const [key, expiresAt] of sessions) {
+    if (expiresAt <= now) sessions.delete(key);
+  }
+  const previous = activeSession(request);
+  if (previous) sessions.delete(previous);
+  if (sessions.size >= 256) return send(response, 503, { error: 'Phiên demo đã đầy. Vui lòng thử lại sau.' });
+  const token = randomBytes(32).toString('hex');
+  sessions.set(token, Date.now() + sessionSeconds * 1000);
+  setSessionCookie(request, response, token, sessionSeconds);
+  return send(response, 200, { ok: true });
+}
 
 class InputError extends Error {}
 function string(value, label, limit, { required = true, trim = true } = {}) {
@@ -134,15 +184,41 @@ function send(response, status, value) {
   response.end(JSON.stringify(value));
 }
 
+function redirect(response, path) {
+  response.writeHead(303, { Location: path });
+  response.end();
+}
+
+async function sendFile(response, [file, type]) {
+  const content = await readFile(new URL(`public/${file}`, import.meta.url));
+  response.writeHead(200, { 'Content-Type': type });
+  response.end(content);
+}
+
 async function route(request, response) {
   const url = new URL(request.url, 'http://localhost');
   const method = request.method;
   const params = url.searchParams;
-  if (method === 'GET' && staticFiles.has(url.pathname)) {
-    const [file, type] = staticFiles.get(url.pathname);
-    const body = await readFile(new URL(`public/${file}`, import.meta.url));
-    response.writeHead(200, { 'Content-Type': type });
-    return response.end(body);
+  const pathname = url.pathname;
+  if (method === 'GET' || method === 'HEAD') {
+    if (staticFiles.has(pathname)) return sendFile(response, staticFiles.get(pathname));
+    if (pathname === '/' || pathname === '/login') {
+      const signedIn = Boolean(activeSession(request));
+      if (pathname === '/' && !signedIn) return redirect(response, '/login');
+      if (pathname === '/login' && signedIn) return redirect(response, '/');
+      return sendFile(response, [signedIn ? 'index.html' : 'login.html', 'text/html; charset=utf-8']);
+    }
+  }
+  if (method === 'POST' && pathname === '/api/login') return login(request, response);
+  if (method === 'POST' && pathname === '/api/logout') {
+    await jsonBody(request);
+    const token = activeSession(request);
+    if (token) sessions.delete(token);
+    setSessionCookie(request, response, '', 0);
+    return send(response, 200, { ok: true });
+  }
+  if (pathname.startsWith('/api/') && !activeSession(request)) {
+    return send(response, 401, { error: 'Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.' });
   }
   if (method === 'GET' && url.pathname === '/api/catalog') {
     const [campaigns, activities, assignments, dates] = await Promise.all([
@@ -203,12 +279,9 @@ const server = createServer(async (request, response) => {
   response.setHeader('X-Content-Type-Options','nosniff');
   response.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
   response.setHeader('Referrer-Policy','no-referrer');
-  if (!timingSafeEqual(digest(request.headers.authorization ?? ''), expectedAuth)) {
-    response.setHeader('WWW-Authenticate', 'Basic realm="Marketing demo", charset="UTF-8"');
-    return send(response, 401, { error: 'Đăng nhập bằng tài khoản demo.' });
-  }
-  if (!['GET','HEAD'].includes(request.method) && request.headers['sec-fetch-site'] === 'cross-site') {
-    return send(response, 403, { error: 'Chỉ chấp nhận thao tác từ trang quản lý khoản chi.' });
+  const fetchSite = request.headers['sec-fetch-site'];
+  if (!['GET','HEAD'].includes(request.method) && fetchSite && fetchSite !== 'same-origin' && fetchSite !== 'none') {
+    return send(response, 403, { error: 'Chỉ chấp nhận thao tác từ trang Campaign Desk.' });
   }
   try {
     await route(request, response);
