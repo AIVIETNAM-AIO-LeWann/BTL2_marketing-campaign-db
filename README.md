@@ -1,6 +1,6 @@
 # BTL2 — Cơ sở dữ liệu quản lý chiến dịch marketing đa kênh
 
-Phần 1: hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu. Procedure CRUD `KhoanChi`, hai procedure truy vấn, hai function nghiệp vụ, trigger lưu tổng chi phí và ứng dụng web thuộc phần 2–3, chưa triển khai trong nhánh này.
+Hiện thực 15 bảng MySQL, ràng buộc dữ liệu/ngữ nghĩa và dữ liệu mẫu (phần 1); trigger tổng chi phí, procedure CRUD/truy vấn khoản chi và hai function nghiệp vụ (phần 2). Ứng dụng web thuộc phần 3, chưa triển khai.
 
 ## Yêu cầu môi trường
 
@@ -20,6 +20,13 @@ database/
   05_reports.sql             # view tính thời lượng, chi phí và tỷ lệ
   06_verify.sql              # đếm dòng và truy vấn minh chứng
   tests/test_constraints.py  # kiểm thử tích hợp, có ca cố ý vi phạm
+  part2/
+    01_expense_triggers.sql   # 2.2: trigger nghiệp vụ và tổng chi phí
+    02_expense_crud.sql       # 2.1: thêm/sửa/xóa khoản chi
+    03_expense_queries.sql    # 2.3: danh sách và tổng chi theo hoạt động
+    04_marketing_functions.sql # 2.4: đếm vượt ngân sách và tính CPA
+  tests/test_expense_integration.py # kiểm tra ghép CRUD/truy vấn/trigger
+  tests/test_marketing_functions.py # kiểm thử hai function
 scripts/
   bootstrap.sh              # dựng CSDL bằng một phiên client qua Bash
   mysql-docker.sh           # dùng client trong container nếu không có client native
@@ -27,6 +34,7 @@ docs/
   constraints.md            # đối chiếu từng yêu cầu BTL1 với cách hiện thực
   design-decisions.md       # giải thích các thay đổi và giới hạn
   part1-test-results.md      # kết quả kiểm thử phần 1
+  part2-functions.md         # đặc tả, minh họa và đối chiếu yêu cầu 2.4
 ```
 
 ## Chạy từ database trống
@@ -50,7 +58,18 @@ SOURCE database/05_reports.sql;
 SOURCE database/06_verify.sql;
 ```
 
-Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Nếu có Bash, có thể dùng `bash scripts/bootstrap.sh -u root -p` để chạy toàn bộ trong một phiên. Không dùng tùy chọn `--force` khi cài đặt vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
+Mỗi bước phải thành công trước khi chạy bước kế tiếp. `SOURCE` là lệnh của mysql client; trong Workbench mở và chạy từng file theo cùng thứ tự. Nếu có Bash, có thể dùng `bash scripts/bootstrap.sh -u root -p` để chạy toàn bộ phần 1 trong một phiên. Không dùng tùy chọn `--force` khi cài đặt vì nó có thể bỏ qua lỗi và tiếp tục nạp dữ liệu thiếu.
+
+Sau khi dựng xong phần 1, chạy các file phần 2 theo thứ tự sau:
+
+```sql
+SOURCE database/part2/01_expense_triggers.sql;
+SOURCE database/part2/02_expense_crud.sql;
+SOURCE database/part2/03_expense_queries.sql;
+SOURCE database/part2/04_marketing_functions.sql;
+```
+
+File trigger thêm cột tổng chi phí và chỉ chạy một lần trên mỗi database. Không nạp lại seed phần 1 sau khi đã cài phần 2. Tài khoản thiết lập cần quyền tạo function và cấp EXECUTE; cấu hình binary logging có thể yêu cầu thêm quyền quản trị khi tạo hàm.
 
 ## Dữ liệu mẫu
 
@@ -88,7 +107,7 @@ Xem lời gọi hoàn chỉnh trong file 04. Mỗi workflow giữ khóa ghi, t�
 
 Đầu vào JSON kiểm tra trường bắt buộc và kiểu dữ liệu trước khi chuyển sang cột SQL. JSON null ở trường bắt buộc bị từ chối; trường tùy chọn giữ SQL NULL. Ngày phải hợp lệ, ngân sách JSON là số nguyên VND. Workflow bị gọi lồng sẽ không commit/rollback giao dịch ngoài, không đổi cờ hoặc giải phóng khóa của bên gọi.
 
-Biến phiên `@p1_internal` chỉ giúp trì hoãn kiểm tra toàn phần bên trong workflow; **không phải cơ chế phân quyền**. Role `marketing_p1` chỉ có SELECT và EXECUTE ba workflow hoàn chỉnh, không có quyền ghi bảng hay gọi helper nội bộ. Không cấp quyền ghi thẳng cho user ứng dụng. Các procedure phần 2 cần dùng cùng nguyên tắc giao dịch/khóa và kiểm tra trước commit.
+Biến phiên `@p1_internal` chỉ giúp trì hoãn kiểm tra toàn phần bên trong workflow; **không phải cơ chế phân quyền**. Role `marketing_p1` có SELECT, EXECUTE ba workflow hoàn chỉnh và hai function 2.4; không có quyền ghi bảng hay gọi helper nội bộ. Quyền gọi procedure CRUD/truy vấn phần 2 chưa được cấp cho role này; cần cấp theo tài khoản ứng dụng khi làm phần 3. Không cấp quyền ghi thẳng cho user ứng dụng. Các procedure CRUD dùng cùng nguyên tắc giao dịch/khóa.
 
 Tài khoản quản trị có quyền thay đổi schema, trigger hoặc biến phiên luôn là tài khoản tin cậy. Không dùng root làm tài khoản ứng dụng.
 
@@ -117,8 +136,15 @@ python database/tests/test_constraints.py --mysql mysql --host 127.0.0.1 --port 
 
 Các thao tác thay đổi thử nghiệm được rollback; user tạm được xóa ở cuối ca kiểm thử. Sau đó có thể chạy lại `06_verify.sql`. Không công bố phần 1 hoàn tất chỉ vì tạo đủ bảng: cần đọc ma trận ràng buộc, chạy các ca hợp lệ/vi phạm và kiểm tra kết quả thực tế.
 
-GitHub Actions `Part 1 MySQL` tự động dựng CSDL và chạy kiểm thử bằng MySQL 8.4.7. Xem kết quả cụ thể của commit/PR. Kết quả kiểm thử phần 1 được ghi tại [docs/part1-test-results.md](docs/part1-test-results.md).
+Sau khi cài phần 2, chạy thêm:
+
+```console
+python database/tests/test_expense_integration.py --mysql mysql --host 127.0.0.1 --port 3306 --user root
+python database/tests/test_marketing_functions.py --mysql mysql --host 127.0.0.1 --port 3306 --user root
+```
+
+GitHub Actions `MySQL checks` dựng phần 1, chạy bộ kiểm thử cũ, rồi nạp phần 2 và kiểm tra cả phần ghép. Xem kết quả cụ thể của commit/PR. Kết quả kiểm thử phần 1 ở [docs/part1-test-results.md](docs/part1-test-results.md); phần 2.4 và các ca minh họa ở [docs/part2-functions.md](docs/part2-functions.md).
 
 ## Phạm vi phần tiếp theo
 
-Đã thống nhất hướng `KhoanChi` làm CRUD chính; hai truy vấn là danh sách khoản chi và tổng hợp chi phí; hai function là đếm hoạt động vượt ngân sách và tính chi phí/chuyển đổi theo khoảng ngày. Thuộc tính lưu `TongChiPhiThucTe` và trigger duy trì nó chưa thêm ở phần 1: hiện giá trị được tính qua view, tránh có cột lưu nhưng chưa đồng bộ.
+Phần 3 cần giao diện CRUD `KhoanChi` gọi ba procedure 2.1, danh sách/lọc/sắp xếp gọi procedure 2.3 và báo cáo gọi procedure hoặc function 2.4. Công nghệ web chưa chốt. Mỗi thành viên cần hiểu các routine và dữ liệu minh họa, kể cả nội dung mình không trực tiếp viết.
