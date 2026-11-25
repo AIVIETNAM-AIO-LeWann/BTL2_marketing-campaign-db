@@ -37,9 +37,9 @@ Một chiến dịch marketing chạy trên nhiều kênh (email, mạng xã h�
 
 <div align="center">
 
-<img src="docs/images/demo.webp" alt="Thao tác trên Campaign Desk: đăng nhập, xem chi tiết khoản chi, sắp xếp, bảng lệnh, báo cáo, đổi giao diện" width="880">
+<img src="docs/images/demo.webp" alt="Thao tác trên Campaign Desk: đăng nhập, xem chi tiết khoản chi, sắp xếp, bảng lệnh, báo cáo, đổi giao diện" width="900">
 
-<sub>Đăng nhập → xem chi tiết khoản chi → sắp xếp → bảng lệnh <kbd>Ctrl</kbd>+<kbd>K</kbd> → báo cáo → đổi giao diện. Quay trực tiếp từ ứng dụng với dữ liệu mẫu.</sub>
+<sub>Đăng nhập → xem chi tiết khoản chi → sắp xếp → bảng lệnh <kbd>Ctrl</kbd>+<kbd>K</kbd> → báo cáo → đổi giao diện. Quay trực tiếp từ ứng dụng với dữ liệu mẫu. <a href="docs/images/demo.mp4">Xem bản video rõ nét hơn (MP4)</a>.</sub>
 
 </div>
 
@@ -57,11 +57,6 @@ Một chiến dịch marketing chạy trên nhiều kênh (email, mạng xã h�
     <td width="50%"><img src="docs/images/expenses-light.webp" alt="Giao diện sáng"><br><sub><b>Giao diện sáng và tối</b>, nhớ lựa chọn của người dùng</sub></td>
   </tr>
 </table>
-
-<div align="center">
-<img src="docs/images/mobile.webp" alt="Giao diện trên điện thoại" width="220"><br>
-<sub><b>Điện thoại</b>: bố cục thích ứng theo màn hình</sub>
-</div>
 
 ## Dự án gồm những phần nào
 
