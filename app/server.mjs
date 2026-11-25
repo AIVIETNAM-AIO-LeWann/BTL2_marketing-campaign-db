@@ -21,6 +21,10 @@ const staticFiles = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/icons.svg', ['icons.svg', 'image/svg+xml']],
+  ['/favicon.svg', ['favicon.svg', 'image/svg+xml']],
+  ['/geist-latin.woff2', ['geist-latin.woff2', 'font/woff2']],
+  ['/geist-vietnamese.woff2', ['geist-vietnamese.woff2', 'font/woff2']],
 ]);
 const sortOptions = new Set(['NGAY_TANG','NGAY_GIAM','TIEN_TANG','TIEN_GIAM']);
 const digest = (value) => createHash('sha256').update(value).digest();

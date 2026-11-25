@@ -10,6 +10,10 @@
 
 Form kiểm tra dữ liệu bắt buộc, định dạng, ngày và số tiền. API kiểm tra lại trước khi gọi SQL. Các lỗi trùng mã, thiếu phân công và khóa sổ có thông báo riêng. Trang chỉ hiện nút sửa/xóa cho khoản chi thuộc nhân viên demo và chưa khóa sổ. Procedure vẫn kiểm tra mọi lần ghi.
 
+Thẻ tổng chi và biểu đồ ngày đều dùng kết quả của bộ lọc hiện tại. Khi có hơn sáu ngày phát sinh, biểu đồ hiển thị sáu ngày có chi gần nhất, còn tổng tiền vẫn tính trên toàn bộ kết quả lọc.
+
+Giao diện HTML/CSS sử dụng hệ biến màu và mẫu bảng, hộp thoại của [shadcn/ui](https://ui.shadcn.com/docs/theming), cùng họa tiết [Dot Pattern của Magic UI](https://magicui.design/docs/components/dot-pattern) được chuyển sang CSS. Bố cục và trạng thái được rà theo [taste-skill](https://github.com/leonxlnx/taste-skill). Bộ icon [Lucide](https://lucide.dev/) được chọn từ [Design Resources for Developers](https://github.com/bradtraversy/design-resources-for-developers) và được lưu cục bộ cùng font Geist. Giấy phép ở `app/LICENSE-Lucide.txt` và `app/LICENSE-Geist.txt`.
+
 ## Chạy web
 
 1. Dùng Node.js 22 trở lên và MySQL 8.4. Nạp phần 1 và phần 2 theo thứ tự trong [README](../README.md). Dùng database riêng có dữ liệu mẫu khi demo.

@@ -49,6 +49,16 @@ function day(value) {
   return value.split('-').reverse().join('/');
 }
 
+function icon(name) {
+  const namespace = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(namespace, 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(namespace, 'use');
+  use.setAttribute('href', `/icons.svg#${name}`);
+  svg.append(use);
+  return svg;
+}
+
 function option(value, label) {
   return new Option(label, value);
 }
@@ -82,14 +92,17 @@ function syncReportActivity() {
 
 function parameters(form) {
   const params = new URLSearchParams(new FormData(form));
+  if (!params.get('from') || !params.get('to')) throw new Error('Chọn ngày bắt đầu và ngày kết thúc.');
   if (params.get('from') > params.get('to')) throw new Error('Từ ngày phải trước hoặc bằng Đến ngày.');
   return params;
 }
 
-function cell(row, value, { secondary, className } = {}) {
+function cell(row, value, { secondary, className, label } = {}) {
   const td = row.insertCell();
+  td.setAttribute('role', 'cell');
   td.textContent = value;
   if (className) td.className = className;
+  if (label) td.dataset.label = label;
   if (secondary) {
     const detail = document.createElement('span');
     detail.className = 'meta';
@@ -99,46 +112,84 @@ function cell(row, value, { secondary, className } = {}) {
   return td;
 }
 
-function renderExpenses(items) {
+function renderSpendChart(days) {
+  const visible = [...days].sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  const max = visible.reduce((largest, [, amount]) => amount > largest ? amount : largest, 0n);
+  const chart = $('spend-chart');
+  chart.hidden = max === 0n;
+  chart.querySelector('figcaption').textContent = days.size > visible.length ? '6 ngày có chi gần nhất' : 'Chi theo ngày';
+  $('chart-bars').replaceChildren(...visible.map(([date, amount], index) => {
+    const column = document.createElement('div');
+    column.className = 'chart-column';
+    column.setAttribute('role', 'listitem');
+    column.title = `${day(date)} · ${currency(amount)}`;
+    const track = document.createElement('span');
+    track.className = 'chart-track';
+    const meter = document.createElement('meter');
+    meter.className = 'chart-meter';
+    meter.max = 1000;
+    meter.value = Math.max(1, Number(amount * 1000n / max));
+    meter.setAttribute('aria-label', `Thực chi ngày ${day(date)}`);
+    meter.setAttribute('aria-valuetext', currency(amount));
+    track.append(meter);
+    const label = document.createElement('span');
+    label.className = 'chart-day';
+    label.setAttribute('aria-hidden', 'true');
+    if (visible.length <= 3 || index === 0 || index === visible.length - 1) label.textContent = day(date).slice(0,5);
+    column.append(track, label);
+    return column;
+  }));
+}
+
+function renderExpenses(items, params) {
   const fragment = document.createDocumentFragment();
+  const dailySpend = new Map();
   let total = 0n;
   for (const item of items) {
     const row = document.createElement('tr');
+    row.setAttribute('role', 'row');
     cell(row, item.NoiDungChi, { secondary: [item.MaKhoanChi, item.MaChungTu].filter(Boolean).join(' · ') });
     cell(row, item.TenHoatDong, { secondary: `${item.MaHoatDong} · ${item.MaChienDich}` });
-    cell(row, day(item.NgayPhatSinh));
-    cell(row, currency(item.SoTien), { className: 'number' });
-    cell(row, item.MaNguoiGhiNhan);
+    cell(row, day(item.NgayPhatSinh), { label: 'Ngày phát sinh' });
+    cell(row, currency(item.SoTien), { className: 'number', label: 'Số tiền' });
+    cell(row, item.MaNguoiGhiNhan, { label: 'Người ghi' });
     const actions = cell(row, '', { className: 'right' });
     const activity = catalog.activities.find(a => a.MaHoatDong === item.MaHoatDong);
     const permitted = item.MaNguoiGhiNhan === catalog.actor && canWrite(activity);
     if (permitted) {
-      for (const [label, action] of [['Sửa', () => openEditor(item)], ['Xóa', () => openDelete(item)]]) {
+      for (const [label, symbol, action] of [['Sửa', 'pencil', () => openEditor(item)], ['Xóa', 'trash-2', () => openDelete(item)]]) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = label;
-        button.className = `secondary row-action${label === 'Xóa' ? ' remove' : ''}`;
+        button.append(icon(symbol), label);
+        button.className = `ghost row-action${label === 'Xóa' ? ' remove' : ''}`;
         button.setAttribute('aria-label', `${label} khoản chi ${item.MaKhoanChi}`);
         button.addEventListener('click', action);
         actions.append(button);
       }
     } else {
       const detail = document.createElement('span');
-      detail.className = 'meta';
       const campaign = catalog.campaigns.find(c => c.MaChienDich === item.MaChienDich);
-      detail.textContent = finished.has(activity?.TrangThai) || finished.has(campaign?.TrangThai) ? 'Đã khóa sổ' : 'Chỉ xem';
+      const locked = finished.has(activity?.TrangThai) || finished.has(campaign?.TrangThai);
+      detail.className = locked ? 'badge locked' : 'badge';
+      detail.textContent = locked ? 'Đã khóa sổ' : 'Chỉ xem';
       actions.append(detail);
     }
-    total += BigInt(item.SoTien);
+    const amount = BigInt(item.SoTien);
+    total += amount;
+    dailySpend.set(item.NgayPhatSinh, (dailySpend.get(item.NgayPhatSinh) ?? 0n) + amount);
     fragment.append(row);
   }
   $('expense-rows').replaceChildren(fragment);
   $('list-amount').textContent = currency(total);
+  const start = day(params.get('from'));
+  const end = day(params.get('to'));
+  $('list-period').textContent = start === end ? start : `${start} – ${end}`;
   $('list-count').textContent = num.format(items.length);
   $('list-activities').textContent = num.format(new Set(items.map(item => item.MaHoatDong)).size);
   $('table-count').textContent = `${items.length} khoản chi`;
   $('expense-empty').textContent = 'Không có khoản chi khớp bộ lọc.';
-  $('expense-empty').hidden = items.length > 0;
+  $('expense-state').hidden = items.length > 0;
+  renderSpendChart(dailySpend);
 }
 
 async function loadExpenses() {
@@ -153,9 +204,12 @@ async function loadExpenses() {
   submit.disabled = true;
   try {
     const result = await api(`/api/expenses?${params}`, { signal: request.signal });
-    renderExpenses(result.rows);
+    if (expenseRequest === request) renderExpenses(result.rows, params);
   } catch (error) {
-    if (error.name !== 'AbortError') banner(error.message, true);
+    if (error.name !== 'AbortError' && expenseRequest === request) {
+      banner(error.message, true);
+      $('expense-empty').textContent = 'Chưa tải được khoản chi. Hãy thử lọc lại.';
+    }
   } finally {
     if (expenseRequest === request) submit.disabled = false;
   }
@@ -243,7 +297,7 @@ async function loadReports() {
   $('cpa-note').textContent = 'CPA của hoạt động trong kỳ';
   $('report-count').textContent = '';
   $('report-rows').replaceChildren();
-  $('report-empty').hidden = false;
+  $('report-state').hidden = false;
   $('report-empty').textContent = 'Đang tải báo cáo…';
   const operations = await Promise.allSettled([
     api(`/api/reports?${params}`, { signal: request.signal }),
@@ -255,15 +309,16 @@ async function loadReports() {
     const fragment = document.createDocumentFragment();
     for (const item of report.value.rows) {
       const row = document.createElement('tr');
+      row.setAttribute('role', 'row');
       cell(row, item.TenHoatDong, { secondary: item.MaHoatDong });
       cell(row, item.TenChienDich, { secondary: item.MaChienDich });
-      cell(row, item.SoKhoanChiTrongKy, { className: 'number' });
-      cell(row, currency(item.TongChiTrongKy), { className: 'number' });
+      cell(row, item.SoKhoanChiTrongKy, { className: 'number', label: 'Số khoản chi' });
+      cell(row, currency(item.TongChiTrongKy), { className: 'number', label: 'Tổng chi trong kỳ' });
       fragment.append(row);
     }
     $('report-rows').replaceChildren(fragment);
     $('report-count').textContent = `${report.value.rows.length} hoạt động`;
-    $('report-empty').hidden = report.value.rows.length > 0;
+    $('report-state').hidden = report.value.rows.length > 0;
     $('report-empty').textContent = 'Không có hoạt động đạt ngưỡng tổng chi trong kỳ.';
   } else { $('report-empty').textContent = report.reason.message; }
   if (metrics.status === 'fulfilled') {
@@ -278,6 +333,7 @@ async function loadReports() {
 
 function showPage() {
   const active = location.hash === '#bao-cao' ? 'bao-cao' : 'khoan-chi';
+  $('current-page').textContent = active === 'bao-cao' ? 'Báo cáo' : 'Khoản chi';
   banner();
   for (const link of document.querySelectorAll('nav a[data-page]')) {
     const selected = link.dataset.page === active;
@@ -311,6 +367,10 @@ for (const dialog of [expenseDialog, deleteDialog]) {
 $('open-create').addEventListener('click', () => openEditor());
 editor.addEventListener('submit', saveExpense);
 deleteForm.addEventListener('submit', removeExpense);
+document.querySelector('.skip-link').addEventListener('click', event => {
+  event.preventDefault();
+  $(location.hash === '#bao-cao' ? 'report-title' : 'expense-title').focus();
+});
 window.addEventListener('hashchange', showPage);
 
 try {
